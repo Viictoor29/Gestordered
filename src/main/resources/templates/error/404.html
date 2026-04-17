@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error 404 - Página no encontrada</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/error404.css">
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-content">
+            <!-- Lottie Animation -->
+            <div class="lottie-container" id="lottie-animation"></div>
+
+            <!-- Error Title -->
+            <h1 class="error-title">¡Oops! Página no encontrada</h1>
+
+            <!-- Error Description -->
+            <p class="error-description">
+                Lo sentimos, la página que buscas no existe o ha sido movida. 
+                Por favor, vuelve al inicio o contáctanos si necesitas ayuda.
+            </p>
+
+            <!-- Buttons -->
+            <div class="error-buttons">
+                <a href="/" class="btn-error btn-home">Volver al Inicio</a>
+                <a href="/help" class="btn-error btn-contact">Obtener Ayuda</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lottie Web Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.10.2/lottie.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Cargar la animación Lottie
+        lottie.loadAnimation({
+            container: document.getElementById('lottie-animation'),
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: '/animation/lottieflow-404-12-3-000000-easey.json'
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Red - Inicio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container-main">
+        <!-- Sección de bienvenida -->
+        <div class="welcome-section">
+            <h1>🌐 Gestor de Red</h1>
+            <p>Administra y controla tu red en Mininet de forma sencilla y eficiente</p>
+        </div>
+
+        <!-- Opciones de acceso -->
+        <div class="options-container">
+            <!-- Card de Login -->
+            <div class="card-option">
+                <div class="card-option-header">
+                    <div>🔐</div>
+                    <h2>Iniciar Sesión</h2>
+                </div>
+                <div class="card-option-body">
+                    <p>Accede con tu cuenta para disfrutar las funcionalidades del gestor de red.</p>
+                    
+                    <form action="/login" method="POST">
+                        <div class="form-group">
+                            <label for="username">Usuario</label>
+                            <input type="text" id="username" name="username" placeholder="Introduce tu usuario" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Contraseña</label>
+                            <input type="password" id="password" name="password" placeholder="Introduce tu contraseña" required>
+                        </div>
+
+                        <div class="remember-me">
+                            <input type="checkbox" id="remember" name="remember" value="true">
+                            <label for="remember">Recuérdame</label>
+                        </div>
+
+                        <button type="submit" class="btn-custom btn-login">Acceder</button>
+                    </form>
+
+                    <div style="margin-top: 20px; text-align: center;">
+                        <a href="/register" style="color: #D4AF37; text-decoration: none; font-size: 0.95rem;">¿No tienes cuenta? Solicítala aquí</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card de Acceso como Invitado -->
+            <div class="card-option">
+                <div class="card-option-header">
+                    <div>👤</div>
+                    <h2>Acceso de Invitado</h2>
+                </div>
+                <div class="card-option-body">
+                    <p>Explora topología de red sin necesidad de crear una cuenta.</p>
+                    
+                    <div style="height: 140px; display: flex; flex-direction: column; justify-content: center;">
+                        <p style="text-align: center; color: #999; font-size: 0.9rem; margin: 0;">
+                            Tendrás acceso limitado a las funciones de lectura
+                        </p>
+                    </div>
+
+                    <a href="/guest" class="btn-guest">Continuar como Invitado</a>
+
+                    <div style="margin-top: 20px; text-align: center;">
+                        <a href="/help" style="color: #D4AF37; text-decoration: none; font-size: 0.9rem;">Más información sobre el acceso de invitado</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

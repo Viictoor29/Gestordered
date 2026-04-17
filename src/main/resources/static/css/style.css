@@ -1,0 +1,236 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container-main {
+    width: 100%;
+    max-width: 1000px;
+    padding: 20px;
+}
+
+.welcome-section {
+    text-align: center;
+    color: white;
+    margin-bottom: 50px;
+    animation: fadeInDown 0.8s ease-in-out;
+}
+
+.welcome-section h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.welcome-section p {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.options-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+    animation: fadeInUp 0.8s ease-in-out 0.2s backwards;
+}
+
+.card-option {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+.card-option:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+}
+
+.card-option-header {
+    padding: 40px 30px;
+    text-align: center;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+}
+
+.card-option-header i {
+    font-size: 3.5rem;
+    margin-bottom: 15px;
+}
+
+.card-option-header h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.card-option-body {
+    padding: 30px;
+}
+
+.card-option-body p {
+    color: #666;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #D4AF37;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+.btn-custom {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-login {
+    background: linear-gradient(135deg, #D4AF37 0%, #C9A227 100%);
+    color: #1e3c72;
+    margin-top: 10px;
+    font-weight: 700;
+}
+
+.btn-login:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4);
+    color: #1e3c72;
+    text-decoration: none;
+}
+
+.btn-guest {
+    background: linear-gradient(135deg, #E8E8E8 0%, #D3D3D3 100%);
+    color: #1e3c72;
+    padding: 12px 40px;
+    text-decoration: none;
+    display: block;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    margin: 0 auto;
+    width: fit-content;
+}
+
+.btn-guest:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    color: #1e3c72;
+    text-decoration: none;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.remember-me input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    cursor: pointer;
+    accent-color: #D4AF37;
+}
+
+.remember-me label {
+    margin-bottom: 0;
+    cursor: pointer;
+    color: #666;
+}
+
+.footer {
+    text-align: center;
+    color: white;
+    margin-top: 50px;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .welcome-section h1 {
+        font-size: 2.5rem;
+    }
+
+    .welcome-section p {
+        font-size: 1rem;
+    }
+
+    .options-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .card-option-header h2 {
+        font-size: 1.5rem;
+    }
+}
