@@ -20,16 +20,47 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
+
+                // Rutas públicas
                 .requestMatchers(
-                    "/", "/index", "/login", "/register", "/guest",
-                    "/forgot-password", "/help",
-                    "/css/**", "/js/**", "/images/**", "/animation/**", "/static/**"
+                    "/",
+                    "/index",
+                    "/login",
+                    "/register",
+                    "/guest",
+                    "/forgot-password",
+                    "/error",
+                    "/favicon.ico",
+                    "/css/**",
+                    "/js/**",
+                    "/images/**",
+                    "/animation/**",
+                    "/static/**"
                 ).permitAll()
-                .anyRequest().permitAll()
+
+                // Todo lo demás requiere login
+                .anyRequest().authenticated()
             )
-            .formLogin(form -> form.disable())
+
+            .formLogin(form -> form
+                .loginPage("/")
+                .loginProcessingUrl("/login")
+                .usernameParameter("username")
+                .passwordParameter("password")
+                .defaultSuccessUrl("/dashboard", true)
+                .failureUrl("/?error=true")
+                .permitAll()
+            )
+
+            .logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID")
+                .permitAll()
+            )
+
             .httpBasic(httpBasic -> httpBasic.disable())
-            .logout(logout -> logout.disable())
             .csrf(csrf -> csrf.disable());
 
         return http.build();
