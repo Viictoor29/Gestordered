@@ -19,25 +19,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/", "/index", "/css/**", "/js/**", "/static/**", "/images/**").permitAll()
-                .requestMatchers("/login", "/register", "/guest", "/forgot-password", "/security-info").permitAll()
-                .requestMatchers("/api/**").permitAll()
-                .anyRequest().authenticated()
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/", "/index", "/login", "/register", "/guest",
+                    "/forgot-password", "/help",
+                    "/css/**", "/js/**", "/images/**", "/animation/**", "/static/**"
+                ).permitAll()
+                .anyRequest().permitAll()
             )
-            .formLogin(form -> form
-                .loginPage("/")
-                .defaultSuccessUrl("/dashboard", true)
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/")
-                .permitAll()
-            )
-            .csrf(csrf -> csrf.disable()); // Deshabilitar CSRF para desarrollo (habilitar en producción)
+            .formLogin(form -> form.disable())
+            .httpBasic(httpBasic -> httpBasic.disable())
+            .logout(logout -> logout.disable())
+            .csrf(csrf -> csrf.disable());
 
         return http.build();
     }
 }
-

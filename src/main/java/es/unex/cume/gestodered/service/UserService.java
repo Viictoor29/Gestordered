@@ -23,15 +23,24 @@ public class UserService {
      * @return Usuario si la autenticación es correcta, null en caso contrario
      */
     public User authenticate(String username, String password) {
-        Optional<User> userOpt = userRepository.findByUsername(username);
-        
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            // Validar contraseña usando BCrypt
-            if (passwordEncoder.matches(password, user.getPasswordHash())) {
-                return user;
-            }
+        String login = username == null ? "" : username.trim();
+
+        Optional<User> userOpt = userRepository.findByUsername(login);
+
+        if (userOpt.isEmpty()) {
+            return null;
         }
+
+        User user = userOpt.get();
+
+        if (!user.isEnabled()) {
+            return null;
+        }
+
+        if (passwordEncoder.matches(password, user.getPasswordHash())) {
+            return user;
+        }
+
         return null;
     }
 
