@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Información de Seguridad - Gestor de Red</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="login-page">
+        <!-- Fondo decorativo -->
+        <div class="background-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+
+        <!-- Botón de regreso -->
+        <div class="back-button-container">
+            <a href="/login" class="back-button">
+                <i class="fas fa-arrow-left"></i> Volver al login
+            </a>
+        </div>
+
+        <!-- Contenedor de información -->
+        <div class="security-container">
+            <div class="security-header">
+                <h1><i class="fas fa-shield-alt"></i> Información de Seguridad</h1>
+                <p>Conoce cómo protegemos tus datos</p>
+            </div>
+
+            <div class="security-content">
+                <!-- Sección BCrypt -->
+                <div class="security-section">
+                    <div class="section-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h2>Cifrado de Contraseñas con BCrypt</h2>
+                    <p>
+                        En Gestor de Red utilizamos <strong>BCrypt</strong>, un algoritmo de hash criptográfico de última generación 
+                        para proteger tus contraseñas.
+                    </p>
+                    
+                    <div class="info-box">
+                        <h4><i class="fas fa-info-circle"></i> ¿Qué es BCrypt?</h4>
+                        <p>
+                            BCrypt es un algoritmo de hash adaptativo que fue diseñado específicamente para el cifrado de contraseñas. 
+                            A diferencia de otros métodos, BCrypt es:
+                        </p>
+                        <ul>
+                            <li><strong>Lento intencionalmente:</strong> Hace que sea computacionalmente costoso romper contraseñas mediante fuerza bruta</li>
+                            <li><strong>Adaptativo:</strong> Su coste computacional puede aumentarse con el tiempo conforme los procesadores se vuelven más rápidos</li>
+                            <li><strong>Con "salt":</strong> Añade un componente aleatorio a cada hash, lo que evita ataques de tabla arcoíris</li>
+                            <li><strong>Unidireccional:</strong> No se puede desencriptar, solo verificar</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Sección Cómo funciona -->
+                <div class="security-section">
+                    <div class="section-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h2>¿Cómo funciona?</h2>
+                    
+                    <div class="process-flow">
+                        <div class="process-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>Registro</h4>
+                                <p>Introduces tu contraseña en texto plano</p>
+                            </div>
+                        </div>
+                        <div class="process-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>Hasheo con BCrypt</h4>
+                                <p>BCrypt genera un hash único e irreversible</p>
+                            </div>
+                        </div>
+                        <div class="process-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>Almacenamiento</h4>
+                                <p>Se guarda SOLO el hash en la BD, nunca la contraseña</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="login-process">
+                        <h4 style="margin-top: 30px;"><i class="fas fa-sign-in-alt"></i> En el Login</h4>
+                        <div class="process-flow">
+                            <div class="process-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h4>Introduces tu contraseña</h4>
+                                    <p>Se envía de forma segura (HTTPS)</p>
+                                </div>
+                            </div>
+                            <div class="process-arrow">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h4>Se valida con BCrypt</h4>
+                                    <p>La contraseña se compara con el hash guardado</p>
+                                </div>
+                            </div>
+                            <div class="process-arrow">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h4>Acceso concedido</h4>
+                                    <p>Si coincide, creas tu sesión</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección Seguridad -->
+                <div class="security-section">
+                    <div class="section-icon">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                    <h2>Medidas de Seguridad Adicionales</h2>
+                    
+                    <div class="security-list">
+                        <div class="security-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <h4>HTTPS Seguro</h4>
+                                <p>Todas las conexiones están cifradas</p>
+                            </div>
+                        </div>
+                        <div class="security-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <h4>Sin Reversibilidad</h4>
+                                <p>Incluso los administradores no pueden ver tus contraseñas</p>
+                            </div>
+                        </div>
+                        <div class="security-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <h4>Salt Único</h4>
+                                <p>Cada contraseña tiene un componente aleatorio único</p>
+                            </div>
+                        </div>
+                        <div class="security-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <h4>Validación en Servidor</h4>
+                                <p>La verificación se realiza siempre en el servidor, nunca en el cliente</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección Buenas Prácticas -->
+                <div class="security-section">
+                    <div class="section-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h2>Recomendaciones de Seguridad</h2>
+                    
+                    <div class="tips-list">
+                        <div class="tip-item">
+                            <span class="tip-icon"><i class="fas fa-password"></i></span>
+                            <div>
+                                <h4>Contraseña Fuerte</h4>
+                                <p>Usa una combinación de mayúsculas, minúsculas, números y caracteres especiales</p>
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <span class="tip-icon"><i class="fas fa-user-secret"></i></span>
+                            <div>
+                                <h4>No Compartas tu Contraseña</h4>
+                                <p>Nunca compartas tus credenciales con nadie, ni siquiera con soporte técnico</p>
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <span class="tip-icon"><i class="fas fa-refresh"></i></span>
+                            <div>
+                                <h4>Cambia Regularmente</h4>
+                                <p>Actualiza tu contraseña cada 3 meses por seguridad</p>
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <span class="tip-icon"><i class="fas fa-window-close"></i></span>
+                            <div>
+                                <h4>Cierra la Sesión</h4>
+                                <p>Siempre cierra sesión cuando termines de usar la aplicación</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ejemplo Visual -->
+                <div class="security-section">
+                    <div class="section-icon">
+                        <i class="fas fa-glasses"></i>
+                    </div>
+                    <h2>Ejemplo Visual</h2>
+                    
+                    <div class="example-box">
+                        <div class="example-row">
+                            <span class="example-label">Tu contraseña original:</span>
+                            <code>MiContraseña123!</code>
+                        </div>
+                        <div class="example-arrow">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <div class="example-row">
+                            <span class="example-label">Hash BCrypt en la BD:</span>
+                            <code>$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86xVXAaxm7m</code>
+                        </div>
+                        <p style="margin-top: 15px; color: #666; font-size: 0.9rem; text-align: center;">
+                            <i class="fas fa-info-circle"></i> 
+                            Cada vez que ingreses la misma contraseña, genera un hash diferente, 
+                            pero el sistema puede verificar que es correcta.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="security-footer">
+                <p>¿Preguntas sobre seguridad? <a href="mailto:support@gestordered.com">Contacta con nosotros</a></p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-login">
+            <p>&copy; 2026 Gestor de Red Mininet. Todos los derechos reservados.</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
