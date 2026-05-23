@@ -49,9 +49,6 @@ public class SecurityConfig {
                 .passwordParameter("password")
                 .defaultSuccessUrl("/dashboard", true)
                 .failureHandler((request, response, exception) -> {
-                    System.out.println("ERROR LOGIN: " + exception.getClass().getName());
-                    System.out.println("MENSAJE: " + exception.getMessage());
-                    exception.printStackTrace();
                     response.sendRedirect("/?error=true");
                 })
                 .permitAll()

@@ -20,16 +20,8 @@ public class MongoUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
         String cleanLogin = login == null ? "" : login.trim();
 
-        System.out.println("LOGIN RECIBIDO = [" + cleanLogin + "]");
-
         User user = userRepository.findByUsername(cleanLogin)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + cleanLogin));
-
-        System.out.println("USUARIO ENCONTRADO = " + user.getUsername());
-        System.out.println("EMAIL = " + user.getEmail());
-        System.out.println("HASH = " + user.getPasswordHash());
-        System.out.println("ENABLED = " + user.isEnabled());
-        System.out.println("ROLE = " + user.getRole());
 
         String role = user.getRole();
 

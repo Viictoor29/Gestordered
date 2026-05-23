@@ -17,41 +17,5 @@ public class GestoderedApplication {
         SpringApplication.run(GestoderedApplication.class, args);
     }
 
-    @Bean
-    CommandLineRunner debugMongo(
-            MongoDatabaseFactory mongoDatabaseFactory,
-            MongoTemplate mongoTemplate,
-            UserRepository userRepository
-    ) {
-        return args -> {
-            System.out.println("========== DEBUG MONGO ==========");
 
-            System.out.println("DB REAL DE SPRING: " + mongoDatabaseFactory.getMongoDatabase().getName());
-
-            System.out.println("COLECCIONES:");
-            mongoTemplate.getCollectionNames().forEach(c -> System.out.println(" - " + c));
-
-            System.out.println("COUNT RAW users: " + mongoTemplate.getCollection("users").countDocuments());
-
-            System.out.println("RAW find username admin:");
-            Document rawAdmin = mongoTemplate
-                    .getCollection("users")
-                    .find(new Document("username", "admin"))
-                    .first();
-
-            System.out.println(rawAdmin);
-
-            System.out.println("COUNT REPOSITORY users: " + userRepository.count());
-
-            System.out.println("REPOSITORY findByUsername admin:");
-            System.out.println(userRepository.findByUsername("admin").isPresent());
-
-            System.out.println("REPOSITORY findAll:");
-            for (User u : userRepository.findAll()) {
-                System.out.println("USER: [" + u.getUsername() + "] EMAIL: [" + u.getEmail() + "]");
-            }
-
-            System.out.println("========== FIN DEBUG MONGO ==========");
-        };
-    }
 }
