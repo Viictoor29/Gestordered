@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Red - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/dashboard.css?v=20260523-split-css">
+</head>
+<body class="dashboard-page">
+    <div class="dashboard-shell">
+        <aside class="dashboard-sidebar">
+            <a href="/dashboard" class="dashboard-brand">
+                <span class="dashboard-brand-icon"><i class="fas fa-network-wired"></i></span>
+                <span>Gestor de Red</span>
+            </a>
+
+            <div class="dashboard-user-card">
+                <div class="dashboard-avatar" th:text="${avatarInitial}">U</div>
+                <div>
+                    <strong th:text="${displayName}">Usuario</strong>
+                    <span th:text="${roleLabel}">Operador</span>
+                </div>
+            </div>
+
+            <nav class="dashboard-nav" aria-label="Menu principal">
+                <a href="#overview" class="active"><i class="fas fa-chart-line"></i><span>Resumen</span></a>
+                <a href="#profile"><i class="fas fa-user-gear"></i><span>Mi perfil</span></a>
+                <a href="#network"><i class="fas fa-diagram-project"></i><span>Topologia</span></a>
+                <a href="#requests"><i class="fas fa-id-card"></i><span>Permisos</span></a>
+                <a href="#admin" th:if="${isAdmin}"><i class="fas fa-shield-halved"></i><span>Administracion</span></a>
+            </nav>
+
+            <form action="/logout" method="POST" class="dashboard-logout">
+                <button type="submit"><i class="fas fa-right-from-bracket"></i><span>Cerrar sesion</span></button>
+            </form>
+        </aside>
+
+        <main class="dashboard-main">
+            <header class="dashboard-topbar">
+                <div>
+                    <p>Panel de control</p>
+                    <h1 th:text="'Hola, ' + ${displayName}">Hola, usuario</h1>
+                </div>
+                <span class="role-badge" th:text="${roleLabel}">Operador</span>
+            </header>
+
+            <section id="overview" class="dashboard-grid dashboard-grid-stats">
+                <article class="dashboard-card stat-card">
+                    <span><i class="fas fa-server"></i></span>
+                    <div>
+                        <strong>Topologias</strong>
+                        <p>Pendiente de conectar con la API</p>
+                    </div>
+                </article>
+
+                <article class="dashboard-card stat-card">
+                    <span><i class="fas fa-route"></i></span>
+                    <div>
+                        <strong>Simulaciones</strong>
+                        <p>Preparado para Mininet</p>
+                    </div>
+                </article>
+
+                <article class="dashboard-card stat-card">
+                    <span><i class="fas fa-user-check"></i></span>
+                    <div>
+                        <strong>Estado</strong>
+                        <p th:text="${user.enabled} ? 'Cuenta activa' : 'Cuenta desactivada'">Cuenta activa</p>
+                    </div>
+                </article>
+            </section>
+
+            <section class="dashboard-content-grid">
+                <article id="profile" class="dashboard-card panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <p>Datos personales</p>
+                            <h2>Mi perfil</h2>
+                        </div>
+                        <button type="button" class="btn-panel" data-api-placeholder="/api/users/me">
+                            <i class="fas fa-floppy-disk"></i>
+                            Guardar
+                        </button>
+                    </div>
+
+                    <form class="profile-form">
+                        <label>
+                            Nombre completo
+                            <input type="text" th:value="${user.fullName}" placeholder="Tu nombre completo">
+                        </label>
+                        <label>
+                            Usuario
+                            <input type="text" th:value="${user.username}" readonly>
+                        </label>
+                        <label>
+                            Email
+                            <input type="email" th:value="${user.email}" placeholder="correo@ejemplo.com">
+                        </label>
+                        <label>
+                            DNI
+                            <input type="text" th:value="${user.dni}" placeholder="00000000A">
+                        </label>
+                        <label>
+                            Telefono
+                            <input type="tel" th:value="${user.phone}" placeholder="+34 600 000 000">
+                        </label>
+                        <label>
+                            Rol actual
+                            <input type="text" th:value="${roleLabel}" readonly>
+                        </label>
+                    </form>
+                </article>
+
+                <article id="network" class="dashboard-card panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <p>Gestion de red</p>
+                            <h2>Topologias</h2>
+                        </div>
+                        <button type="button" class="btn-panel" data-api-placeholder="/api/topologies">
+                            <i class="fas fa-plus"></i>
+                            Nueva
+                        </button>
+                    </div>
+
+                    <div class="empty-state">
+                        <i class="fas fa-diagram-project"></i>
+                        <h3>No hay topologias cargadas</h3>
+                        <p>Cuando conectes la API, aqui apareceran las topologias disponibles para consultar, editar o lanzar en Mininet.</p>
+                    </div>
+                </article>
+            </section>
+
+            <section class="dashboard-content-grid">
+                <article id="requests" class="dashboard-card panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <p>Permisos</p>
+                            <h2>Solicitud de rol</h2>
+                        </div>
+                        <button type="button" class="btn-panel btn-panel-secondary" data-api-placeholder="/api/role-requests">
+                            <i class="fas fa-paper-plane"></i>
+                            Solicitar
+                        </button>
+                    </div>
+
+                    <div class="request-box">
+                        <p th:if="${isAdmin}">Tu cuenta tiene permisos de administracion. Desde el panel admin podras revisar solicitudes y gestionar usuarios.</p>
+                        <p th:unless="${isAdmin}">Tu cuenta tiene permisos de operador. Puedes solicitar permisos superiores cuando este flujo este conectado a la API.</p>
+                    </div>
+                </article>
+
+                <article id="admin" class="dashboard-card panel-card admin-panel" th:if="${isAdmin}">
+                    <div class="panel-header">
+                        <div>
+                            <p>Solo administradores</p>
+                            <h2>Administracion</h2>
+                        </div>
+                    </div>
+
+                    <div class="admin-actions">
+                        <button type="button" data-api-placeholder="/api/admin/users"><i class="fas fa-users"></i> Usuarios</button>
+                        <button type="button" data-api-placeholder="/api/admin/role-requests"><i class="fas fa-list-check"></i> Solicitudes</button>
+                        <button type="button" data-api-placeholder="/api/admin/audit"><i class="fas fa-clock-rotate-left"></i> Auditoria</button>
+                    </div>
+                </article>
+
+                <article class="dashboard-card panel-card operator-panel" th:unless="${isAdmin}">
+                    <div class="panel-header">
+                        <div>
+                            <p>Herramientas</p>
+                            <h2>Operador</h2>
+                        </div>
+                    </div>
+
+                    <div class="admin-actions">
+                        <button type="button" data-api-placeholder="/api/topologies/mine"><i class="fas fa-folder-open"></i> Mis topologias</button>
+                        <button type="button" data-api-placeholder="/api/simulations"><i class="fas fa-play"></i> Simulaciones</button>
+                        <button type="button" data-api-placeholder="/api/reports"><i class="fas fa-file-lines"></i> Informes</button>
+                    </div>
+                </article>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.querySelectorAll('.dashboard-nav a[href^="#"]').forEach(link => {
+            link.addEventListener('click', function() {
+                document.querySelectorAll('.dashboard-nav a').forEach(item => item.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

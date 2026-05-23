@@ -1,5 +1,17 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #1e3c72 !important;
+}
+
+a {
+    text-decoration: none;
+    transition: all 0.3s ease;
 }
 
 .error-container {
