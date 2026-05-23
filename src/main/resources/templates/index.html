@@ -6,7 +6,7 @@
     <title>Gestor de Red - Inicio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css?v=20260523-error-palette">
 </head>
 <body>
     <div class="container-main">
@@ -42,7 +42,12 @@
 
                         <div class="form-group">
                             <label for="password">Contraseña</label>
-                            <input type="password" id="password" name="password" placeholder="Introduce tu contraseña" required>
+                            <div class="password-field">
+                                <input type="password" id="password" name="password" placeholder="Introduce tu contraseña" required>
+                                <button type="button" class="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                    <i class="fas fa-eye" aria-hidden="true"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="remember-me">
@@ -53,8 +58,8 @@
                         <button type="submit" class="btn-custom btn-login">Acceder</button>
                     </form>
 
-                    <div style="margin-top: 20px; text-align: center;">
-                        <a href="/register" style="color: #667eea; text-decoration: none; font-size: 0.95rem; font-weight: 600;">¿No tienes cuenta? Solicítala aquí</a>
+                    <div class="secondary-link">
+                        <a href="/register">¿No tienes cuenta? Solicítala aquí</a>
                     </div>
                 </div>
             </div>
@@ -68,21 +73,25 @@
                 <div class="card-option-body">
                     <p>Explora topología de red sin necesidad de crear una cuenta.</p>
                     
-                    <div style="height: 140px; display: flex; flex-direction: column; justify-content: center;">
-                        <p style="text-align: center; color: #999; font-size: 0.9rem; margin: 0;">
+                    <div class="guest-note">
+                        <p>
                             Tendrás acceso limitado a las funciones de lectura
                         </p>
                     </div>
 
                     <a href="/guest" class="btn-guest">Continuar como Invitado</a>
 
-                    <div style="margin-top: 20px; text-align: center;">
-                        <a href="/help" style="color: #D4AF37; text-decoration: none; font-size: 0.9rem;">Más información sobre el acceso de invitado</a>
+                    <div class="secondary-link">
+                        <a href="/help">Más información sobre el acceso de invitado</a>
                     </div>
                 </div>
             </div>
         </div>
 
+        <footer class="site-footer">
+            <span>Gestor de Red</span>
+            <span>Víctor Pinilla Corraliza</span>
+        </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -103,10 +112,26 @@
         // Add input focus effects
         document.querySelectorAll('.login-form-inline .form-group input').forEach(input => {
             input.addEventListener('focus', function() {
-                this.parentElement.style.marginBottom = '25px';
+                this.closest('.form-group').style.marginBottom = '25px';
             });
             input.addEventListener('blur', function() {
-                this.parentElement.style.marginBottom = '20px';
+                this.closest('.form-group').style.marginBottom = '20px';
             });
         });
+
+        const passwordInput = document.getElementById('password');
+        const togglePasswordButton = document.querySelector('.toggle-password');
+
+        if (passwordInput && togglePasswordButton) {
+            togglePasswordButton.addEventListener('click', function() {
+                const isHidden = passwordInput.type === 'password';
+                passwordInput.type = isHidden ? 'text' : 'password';
+                this.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                this.setAttribute('aria-pressed', String(isHidden));
+
+                const icon = this.querySelector('i');
+                icon.classList.toggle('fa-eye', !isHidden);
+                icon.classList.toggle('fa-eye-slash', isHidden);
+            });
+        }
     </script>
