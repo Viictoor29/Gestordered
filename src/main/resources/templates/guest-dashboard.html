@@ -66,7 +66,6 @@
                     </button>
                 </form>
 
-                <p class="server-help">Esta direccion se usara mas adelante para consultar la API que exponga el servidor donde este corriendo Mininet.</p>
             </section>
 
             <section class="dashboard-grid dashboard-grid-stats guest-summary-grid">
@@ -105,5 +104,109 @@
             </section>
         </main>
     </div>
+
+    <div class="account-request-modal" id="account-request-modal" aria-hidden="true">
+        <div class="account-request-backdrop" data-action="close-account-request"></div>
+        <section class="account-request-dialog" role="dialog" aria-modal="true" aria-labelledby="account-request-title">
+            <div class="panel-header">
+                <div>
+                    <p>Acceso completo</p>
+                    <h2 id="account-request-title">Solicitar una cuenta</h2>
+                </div>
+                <button type="button" class="modal-close-button" data-action="close-account-request" aria-label="Cerrar formulario">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            <form class="account-request-form" data-api-placeholder="/api/account-requests">
+                <label>
+                    Nombre completo
+                    <input type="text" name="fullName" placeholder="Nombre y apellidos" required>
+                </label>
+
+                <label>
+                    Usuario deseado
+                    <input type="text" name="username" placeholder="usuario" required>
+                </label>
+
+                <label>
+                    Email
+                    <input type="email" name="email" placeholder="correo@ejemplo.com" required>
+                </label>
+
+                <label>
+                    DNI
+                    <input type="text" name="dni" placeholder="00000000A" required>
+                </label>
+
+                <label>
+                    Telefono
+                    <input type="tel" name="phone" placeholder="+34 600 000 000">
+                </label>
+
+                <label>
+                    Tipo de cuenta
+                    <select name="requestedRole" required>
+                        <option value="OPERATOR">Operador</option>
+                        <option value="ADMIN">Administrador</option>
+                    </select>
+                </label>
+
+                <label class="account-request-wide">
+                    Motivo de la solicitud
+                    <textarea name="reason" rows="4" placeholder="Explica brevemente para que necesitas acceso"></textarea>
+                </label>
+
+                <p class="account-request-feedback" id="account-request-feedback" aria-live="polite"></p>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-panel btn-panel-secondary" data-action="close-account-request">Cancelar</button>
+                    <button type="submit" class="btn-panel">
+                        <i class="fas fa-paper-plane"></i>
+                        Enviar solicitud
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <script>
+        const accountRequestModal = document.getElementById('account-request-modal');
+        const accountRequestForm = document.querySelector('.account-request-form');
+        const accountRequestFeedback = document.getElementById('account-request-feedback');
+
+        function openAccountRequestModal() {
+            accountRequestModal.classList.add('is-open');
+            accountRequestModal.setAttribute('aria-hidden', 'false');
+            accountRequestModal.querySelector('input').focus();
+        }
+
+        function closeAccountRequestModal() {
+            accountRequestModal.classList.remove('is-open');
+            accountRequestModal.setAttribute('aria-hidden', 'true');
+        }
+
+        document.querySelectorAll('[data-action="open-account-request"]').forEach(trigger => {
+            trigger.addEventListener('click', event => {
+                event.preventDefault();
+                openAccountRequestModal();
+            });
+        });
+
+        document.querySelectorAll('[data-action="close-account-request"]').forEach(trigger => {
+            trigger.addEventListener('click', closeAccountRequestModal);
+        });
+
+        accountRequestForm.addEventListener('submit', event => {
+            event.preventDefault();
+            accountRequestFeedback.textContent = 'Formulario preparado. Falta conectar este envio con la API.';
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && accountRequestModal.classList.contains('is-open')) {
+                closeAccountRequestModal();
+            }
+        });
+    </script>
 </body>
 </html>
