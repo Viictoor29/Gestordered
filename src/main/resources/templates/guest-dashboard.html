@@ -146,10 +146,8 @@
 
                 <label>
                     Tipo de cuenta
-                    <select name="requestedRole" required>
-                        <option value="OPERATOR">Operador</option>
-                        <option value="ADMIN">Administrador</option>
-                    </select>
+                    <input type="text" value="Operador" readonly>
+                    <input type="hidden" name="requestedRole" value="OPERATOR">
                 </label>
 
                 <label class="account-request-wide">
