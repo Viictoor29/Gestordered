@@ -572,6 +572,14 @@ button {
     min-height: 22px;
 }
 
+.account-request-feedback.is-error {
+    color: #b42318;
+}
+
+.account-request-feedback.is-success {
+    color: #067647;
+}
+
 .modal-actions {
     display: flex;
     justify-content: flex-end;

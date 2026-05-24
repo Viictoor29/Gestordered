@@ -13,12 +13,14 @@ public class RoleRequest {
     private String id;
 
     private ObjectId userId;
+    private String username;
     private String fullName;
     private String email;
     private String dni;
     private String phone;
     private String currentRole;
     private String requestedRole;
+    private String reason;
     private String status;
     private ObjectId reviewedBy;
     private Instant createdAt;
@@ -33,6 +35,10 @@ public class RoleRequest {
 
     public ObjectId getUserId() {
         return userId;
+    }
+
+    public String getUsername() {
+        return username;
     }
 
     public String getFullName() {
@@ -59,6 +65,10 @@ public class RoleRequest {
         return requestedRole;
     }
 
+    public String getReason() {
+        return reason;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -83,6 +93,10 @@ public class RoleRequest {
         this.userId = userId;
     }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
@@ -105,6 +119,10 @@ public class RoleRequest {
 
     public void setRequestedRole(String requestedRole) {
         this.requestedRole = requestedRole;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 
     public void setStatus(String status) {

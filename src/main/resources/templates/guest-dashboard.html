@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -60,7 +60,7 @@
                         IP del servidor
                         <input type="text" name="serverIp" placeholder="Ej. 192.168.1.50" autocomplete="off">
                     </label>
-                    <button type="button" class="btn-panel" data-api-placeholder="/api/guest/connect">
+                    <button type="button" class="btn-panel">
                         <i class="fas fa-plug"></i>
                         Conectar
                     </button>
@@ -110,7 +110,7 @@
         <section class="account-request-dialog" role="dialog" aria-modal="true" aria-labelledby="account-request-title">
             <div class="panel-header">
                 <div>
-                    <p>Acceso completo</p>
+                    <p>Acceso como gestor</p>
                     <h2 id="account-request-title">Solicitar una cuenta</h2>
                 </div>
                 <button type="button" class="modal-close-button" data-action="close-account-request" aria-label="Cerrar formulario">
@@ -118,7 +118,7 @@
                 </button>
             </div>
 
-            <form class="account-request-form" data-api-placeholder="/api/account-requests">
+            <form class="account-request-form" th:action="@{/guest/role-requests}" action="/guest/role-requests" method="post">
                 <label>
                     Nombre completo
                     <input type="text" name="fullName" placeholder="Nombre y apellidos" required>
@@ -131,17 +131,17 @@
 
                 <label>
                     Email
-                    <input type="email" name="email" placeholder="correo@ejemplo.com" required>
+                    <input type="email" name="email" placeholder="correo@ejemplo.com" maxlength="120" required>
                 </label>
 
                 <label>
                     DNI
-                    <input type="text" name="dni" placeholder="00000000A" required>
+                    <input type="text" name="dni" placeholder="00000000A" pattern="[0-9]{8}[A-Za-z]" maxlength="9" title="Introduce un DNI valido, por ejemplo 00000000T" required>
                 </label>
 
                 <label>
                     Telefono
-                    <input type="tel" name="phone" placeholder="+34 600 000 000">
+                    <input type="tel" name="phone" placeholder="600 000 000" required>
                 </label>
 
                 <label>
@@ -155,7 +155,9 @@
                     <textarea name="reason" rows="4" placeholder="Explica brevemente para que necesitas acceso"></textarea>
                 </label>
 
-                <p class="account-request-feedback" id="account-request-feedback" aria-live="polite"></p>
+                <p class="account-request-feedback" id="account-request-feedback" aria-live="polite"
+                   th:text="${requestSuccess ?: requestError}"
+                   th:classappend="${requestError} ? ' is-error' : (${requestSuccess} ? ' is-success' : '')"></p>
 
                 <div class="modal-actions">
                     <button type="button" class="btn-panel btn-panel-secondary" data-action="close-account-request">Cancelar</button>
@@ -170,7 +172,6 @@
 
     <script>
         const accountRequestModal = document.getElementById('account-request-modal');
-        const accountRequestForm = document.querySelector('.account-request-form');
         const accountRequestFeedback = document.getElementById('account-request-feedback');
 
         function openAccountRequestModal() {
@@ -182,6 +183,8 @@
         function closeAccountRequestModal() {
             accountRequestModal.classList.remove('is-open');
             accountRequestModal.setAttribute('aria-hidden', 'true');
+            accountRequestFeedback.textContent = '';
+            accountRequestFeedback.classList.remove('is-error', 'is-success');
         }
 
         document.querySelectorAll('[data-action="open-account-request"]').forEach(trigger => {
@@ -195,10 +198,9 @@
             trigger.addEventListener('click', closeAccountRequestModal);
         });
 
-        accountRequestForm.addEventListener('submit', event => {
-            event.preventDefault();
-            accountRequestFeedback.textContent = 'Formulario preparado. Falta conectar este envio con la API.';
-        });
+        if (accountRequestFeedback.textContent.trim()) {
+            openAccountRequestModal();
+        }
 
         document.addEventListener('keydown', event => {
             if (event.key === 'Escape' && accountRequestModal.classList.contains('is-open')) {
