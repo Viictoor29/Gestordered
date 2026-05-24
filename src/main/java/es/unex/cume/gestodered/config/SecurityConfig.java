@@ -54,7 +54,7 @@ public class SecurityConfig {
                     response.sendRedirect("/?error=true");
                 })
                 .permitAll()
-)
+            )
 
             .logout(logout -> logout
                 .logoutUrl("/logout")
