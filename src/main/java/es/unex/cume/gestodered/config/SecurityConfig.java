@@ -29,6 +29,7 @@ public class SecurityConfig {
                     "/register",
                     "/guest",
                     "/guest/role-requests",
+                    "/guest/role-requests/status",
                     "/forgot-password",
                     "/error",
                     "/favicon.ico",

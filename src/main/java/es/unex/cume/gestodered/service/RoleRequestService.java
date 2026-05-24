@@ -6,6 +6,7 @@ import es.unex.cume.gestodered.data.repository.RoleRequestRepository;
 import es.unex.cume.gestodered.data.repository.UserRepository;
 import org.bson.types.ObjectId;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -26,10 +27,12 @@ public class RoleRequestService {
 
     private final RoleRequestRepository roleRequestRepository;
     private final UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
-    public RoleRequestService(RoleRequestRepository roleRequestRepository, UserRepository userRepository) {
+    public RoleRequestService(RoleRequestRepository roleRequestRepository, UserRepository userRepository, BCryptPasswordEncoder passwordEncoder) {
         this.roleRequestRepository = roleRequestRepository;
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public RoleRequest createRequest(RoleRequest request) {
@@ -72,8 +75,8 @@ public class RoleRequestService {
             throw new IllegalArgumentException("El tipo de cuenta es obligatorio");
         }
 
-        if (hasPendingRequest(email, dni)) {
-            throw new IllegalStateException("Ya existe una solicitud pendiente para ese email o DNI");
+        if (hasPendingRequest(email, dni, request.getUsername())) {
+            throw new IllegalStateException("Ya existe una solicitud pendiente para ese email, DNI o usuario");
         }
 
         request.setUsername(normalize(request.getUsername()));
@@ -83,7 +86,7 @@ public class RoleRequestService {
         request.setPhone(normalize(request.getPhone()));
         request.setCurrentRole(defaultIfBlank(normalizeRole(request.getCurrentRole()), DEFAULT_CURRENT_ROLE));
         request.setRequestedRole(defaultIfBlank(normalizeRole(request.getRequestedRole()), DEFAULT_REQUESTED_ROLE));
-        request.setReason(normalize(request.getReason()));
+        request.setReason(defaultIfNull(normalize(request.getReason()), ""));
         request.setStatus(STATUS_PENDING);
         request.setReviewedBy(null);
         request.setCreatedAt(Instant.now());
@@ -92,8 +95,29 @@ public class RoleRequestService {
         try {
             return roleRequestRepository.save(request);
         } catch (DuplicateKeyException exception) {
-            throw new IllegalStateException("Ya existe una solicitud pendiente para ese email o DNI", exception);
+            throw new IllegalStateException("Ya existe una solicitud pendiente para ese email, DNI o usuario", exception);
         }
+    }
+
+    public RoleRequest createGuestRequest(RoleRequest request, String password, String confirmPassword) {
+        if (request == null) {
+            throw new IllegalArgumentException("La solicitud no puede ser nula");
+        }
+
+        if (isBlank(password)) {
+            throw new IllegalArgumentException("La contraseña es obligatoria");
+        }
+
+        if (!password.equals(confirmPassword)) {
+            throw new IllegalArgumentException("Las contraseñas no coinciden");
+        }
+
+        request.setCurrentRole(DEFAULT_CURRENT_ROLE);
+        request.setRequestedRole(DEFAULT_REQUESTED_ROLE);
+        request.setPasswordHash(passwordEncoder.encode(password));
+        validateGuestAccountDoesNotExist(request);
+
+        return createRequest(request);
     }
 
     public RoleRequest createRequestForUser(User user, String requestedRole) {
@@ -134,6 +158,10 @@ public class RoleRequestService {
         return roleRequestRepository.findByDni(normalizeUpper(dni));
     }
 
+    public List<RoleRequest> findByUsername(String username) {
+        return roleRequestRepository.findByUsername(normalize(username));
+    }
+
     public List<RoleRequest> findByUserId(String userId) {
         ObjectId objectId = toObjectId(userId);
 
@@ -144,12 +172,39 @@ public class RoleRequestService {
         return roleRequestRepository.findByUserId(objectId);
     }
 
+    public Optional<RoleRequest> findGuestRequestByIdentifier(String identifier) {
+        String cleanIdentifier = normalize(identifier);
+
+        if (isBlank(cleanIdentifier)) {
+            throw new IllegalArgumentException("Introduce un DNI, email o usuario");
+        }
+
+        String email = normalizeLower(cleanIdentifier);
+        String dni = normalizeUpper(cleanIdentifier);
+
+        if (isValidEmail(email)) {
+            return roleRequestRepository.findFirstByCurrentRoleAndEmailOrderByCreatedAtDesc(DEFAULT_CURRENT_ROLE, email);
+        }
+
+        if (isValidDniFormat(dni)) {
+            return roleRequestRepository.findFirstByCurrentRoleAndDniOrderByCreatedAtDesc(DEFAULT_CURRENT_ROLE, dni);
+        }
+
+        return roleRequestRepository.findFirstByCurrentRoleAndUsernameOrderByCreatedAtDesc(DEFAULT_CURRENT_ROLE, cleanIdentifier);
+    }
+
     public boolean hasPendingRequest(String email, String dni) {
+        return hasPendingRequest(email, dni, null);
+    }
+
+    public boolean hasPendingRequest(String email, String dni, String username) {
         String cleanEmail = normalizeLower(email);
         String cleanDni = normalizeUpper(dni);
+        String cleanUsername = normalize(username);
 
         return (!isBlank(cleanEmail) && roleRequestRepository.findByEmailAndStatus(cleanEmail, STATUS_PENDING).isPresent())
-                || (!isBlank(cleanDni) && roleRequestRepository.findByDniAndStatus(cleanDni, STATUS_PENDING).isPresent());
+                || (!isBlank(cleanDni) && roleRequestRepository.findByDniAndStatus(cleanDni, STATUS_PENDING).isPresent())
+                || (!isBlank(cleanUsername) && roleRequestRepository.findByUsernameAndStatus(cleanUsername, STATUS_PENDING).isPresent());
     }
 
     public RoleRequest approveRequest(String requestId, String reviewerUserId) {
@@ -185,6 +240,24 @@ public class RoleRequestService {
         return roleRequestRepository.save(request);
     }
 
+    private void validateGuestAccountDoesNotExist(RoleRequest request) {
+        String username = normalize(request.getUsername());
+        String email = normalizeLower(request.getEmail());
+        String dni = normalizeUpper(request.getDni());
+
+        if (!isBlank(username) && userRepository.findByUsername(username).isPresent()) {
+            throw new IllegalStateException("Ya existe una cuenta con ese usuario");
+        }
+
+        if (!isBlank(email) && userRepository.findByEmail(email).isPresent()) {
+            throw new IllegalStateException("Ya existe una cuenta con ese email");
+        }
+
+        if (!isBlank(dni) && userRepository.findByDni(dni).isPresent()) {
+            throw new IllegalStateException("Ya existe una cuenta con ese DNI");
+        }
+    }
+
     private ObjectId toObjectId(String value) {
         if (isBlank(value) || !ObjectId.isValid(value)) {
             return null;
@@ -214,6 +287,10 @@ public class RoleRequestService {
 
     private String defaultIfBlank(String value, String defaultValue) {
         return isBlank(value) ? defaultValue : value;
+    }
+
+    private String defaultIfNull(String value, String defaultValue) {
+        return value == null ? defaultValue : value;
     }
 
     private boolean isBlank(String value) {

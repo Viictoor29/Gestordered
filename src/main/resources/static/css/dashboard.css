@@ -559,6 +559,38 @@ button {
     box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16);
 }
 
+.password-field {
+    position: relative;
+    display: block;
+}
+
+.password-field input {
+    padding-right: 46px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    width: 34px;
+    height: 34px;
+    margin-top: 4px;
+    transform: translateY(-50%);
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.password-toggle:hover {
+    background: #f1f5f9;
+    color: #1e3c72;
+}
+
 .account-request-wide,
 .account-request-feedback,
 .modal-actions {
@@ -578,6 +610,10 @@ button {
 
 .account-request-feedback.is-success {
     color: #067647;
+}
+
+.account-request-feedback.is-pending {
+    color: #b54708;
 }
 
 .modal-actions {

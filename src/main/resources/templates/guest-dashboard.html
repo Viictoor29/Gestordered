@@ -27,6 +27,7 @@
             <nav class="dashboard-nav" aria-label="Menu de invitado">
                 <a href="#network" class="active"><i class="fas fa-diagram-project"></i><span>Topologia</span></a>
                 <a href="#" data-action="open-account-request"><i class="fas fa-user-plus"></i><span>Solicitar una cuenta</span></a>
+                <a href="#" data-action="open-request-status"><i class="fas fa-clipboard-check"></i><span>Ver petición</span></a>
             </nav>
 
             <div class="dashboard-logout">
@@ -130,6 +131,26 @@
                 </label>
 
                 <label>
+                    Contraseña
+                    <span class="password-field">
+                        <input type="password" name="password" placeholder="Contraseña" minlength="8" autocomplete="new-password" required>
+                        <button type="button" class="password-toggle" data-action="toggle-password" aria-label="Mostrar contraseña">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </span>
+                </label>
+
+                <label>
+                    Repetir contraseña
+                    <span class="password-field">
+                        <input type="password" name="confirmPassword" placeholder="Repite la contraseña" minlength="8" autocomplete="new-password" required>
+                        <button type="button" class="password-toggle" data-action="toggle-password" aria-label="Mostrar contraseña">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </span>
+                </label>
+
+                <label>
                     Email
                     <input type="email" name="email" placeholder="correo@ejemplo.com" maxlength="120" required>
                 </label>
@@ -170,9 +191,45 @@
         </section>
     </div>
 
+    <div class="account-request-modal" id="request-status-modal" aria-hidden="true">
+        <div class="account-request-backdrop" data-action="close-request-status"></div>
+        <section class="account-request-dialog request-status-dialog" role="dialog" aria-modal="true" aria-labelledby="request-status-title">
+            <div class="panel-header">
+                <div>
+                    <p>Estado de solicitud</p>
+                    <h2 id="request-status-title">Ver petición</h2>
+                </div>
+                <button type="button" class="modal-close-button" data-action="close-request-status" aria-label="Cerrar formulario">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            <form class="account-request-form" th:action="@{/guest/role-requests/status}" action="/guest/role-requests/status" method="post">
+                <label class="account-request-wide">
+                    DNI, email o usuario
+                    <input type="text" name="identifier" placeholder="00000000A, correo@ejemplo.com o usuario" required>
+                </label>
+
+                <p class="account-request-feedback" id="request-status-feedback" aria-live="polite"
+                   th:text="${statusSuccess != null ? 'Estado: ' + statusSuccess : statusError}"
+                   th:classappend="${statusError} ? ' is-error' : (${statusClass} ?: '')"></p>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-panel btn-panel-secondary" data-action="close-request-status">Cancelar</button>
+                    <button type="submit" class="btn-panel">
+                        <i class="fas fa-magnifying-glass"></i>
+                        Consultar
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+
     <script>
         const accountRequestModal = document.getElementById('account-request-modal');
         const accountRequestFeedback = document.getElementById('account-request-feedback');
+        const requestStatusModal = document.getElementById('request-status-modal');
+        const requestStatusFeedback = document.getElementById('request-status-feedback');
 
         function openAccountRequestModal() {
             accountRequestModal.classList.add('is-open');
@@ -187,6 +244,19 @@
             accountRequestFeedback.classList.remove('is-error', 'is-success');
         }
 
+        function openRequestStatusModal() {
+            requestStatusModal.classList.add('is-open');
+            requestStatusModal.setAttribute('aria-hidden', 'false');
+            requestStatusModal.querySelector('input').focus();
+        }
+
+        function closeRequestStatusModal() {
+            requestStatusModal.classList.remove('is-open');
+            requestStatusModal.setAttribute('aria-hidden', 'true');
+            requestStatusFeedback.textContent = '';
+            requestStatusFeedback.classList.remove('is-error', 'is-success');
+        }
+
         document.querySelectorAll('[data-action="open-account-request"]').forEach(trigger => {
             trigger.addEventListener('click', event => {
                 event.preventDefault();
@@ -194,17 +264,49 @@
             });
         });
 
+        document.querySelectorAll('[data-action="open-request-status"]').forEach(trigger => {
+            trigger.addEventListener('click', event => {
+                event.preventDefault();
+                openRequestStatusModal();
+            });
+        });
+
         document.querySelectorAll('[data-action="close-account-request"]').forEach(trigger => {
             trigger.addEventListener('click', closeAccountRequestModal);
+        });
+
+        document.querySelectorAll('[data-action="close-request-status"]').forEach(trigger => {
+            trigger.addEventListener('click', closeRequestStatusModal);
+        });
+
+        document.querySelectorAll('[data-action="toggle-password"]').forEach(trigger => {
+            trigger.addEventListener('click', () => {
+                const passwordInput = trigger.closest('.password-field').querySelector('input');
+                const icon = trigger.querySelector('i');
+                const isHidden = passwordInput.type === 'password';
+
+                passwordInput.type = isHidden ? 'text' : 'password';
+                trigger.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                icon.classList.toggle('fa-eye', !isHidden);
+                icon.classList.toggle('fa-eye-slash', isHidden);
+            });
         });
 
         if (accountRequestFeedback.textContent.trim()) {
             openAccountRequestModal();
         }
 
+        if (requestStatusFeedback.textContent.trim()) {
+            openRequestStatusModal();
+        }
+
         document.addEventListener('keydown', event => {
             if (event.key === 'Escape' && accountRequestModal.classList.contains('is-open')) {
                 closeAccountRequestModal();
+            }
+
+            if (event.key === 'Escape' && requestStatusModal.classList.contains('is-open')) {
+                closeRequestStatusModal();
             }
         });
     </script>

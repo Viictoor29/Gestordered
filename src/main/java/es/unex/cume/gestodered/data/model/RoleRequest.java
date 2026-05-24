@@ -18,6 +18,7 @@ public class RoleRequest {
     private String email;
     private String dni;
     private String phone;
+    private String passwordHash;
     private String currentRole;
     private String requestedRole;
     private String reason;
@@ -55,6 +56,10 @@ public class RoleRequest {
 
     public String getPhone() {
         return phone;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
     public String getCurrentRole() {
@@ -111,6 +116,10 @@ public class RoleRequest {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     public void setCurrentRole(String currentRole) {
