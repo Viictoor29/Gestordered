@@ -147,7 +147,7 @@
             linksUp: edges.filter(edge => isEdgeUp(edge)).length,
             linksDown: edges.filter(edge => !isEdgeUp(edge)).length,
             blocked: nodes.filter(isNodeBlocked).length + edges.filter(isEdgeBlocked).length,
-            degraded: edges.filter(edge => getEdgeDegradation(edge) !== 'healthy').length
+            degraded: edges.filter(isEdgeDegraded).length
         };
     }
 
@@ -314,6 +314,7 @@
         const title = node.name || node.id;
         const state = node.connected === false ? 'Desconectado' : node.state || 'Activo';
         const traffic = node.traffic_state || (node.traffic_blocked ? 'blocked' : 'allowed');
+        const trafficFilters = node.traffic_filters || {};
 
         return `
             <div class="detail-heading">
@@ -327,14 +328,26 @@
                 ${statusBadge(state, node.connected === false ? 'is-danger' : 'is-success')}
                 ${statusBadge(isNodeBlocked(node) ? 'Bloqueado' : 'Permitido', isNodeBlocked(node) ? 'is-danger' : 'is-success')}
             </div>
-            <dl class="detail-list">
-                ${detailRow('ID', node.id)}
-                ${detailRow('MAC', node.mac)}
-                ${detailRow('IPv4', formatList(node.ipv4))}
-                ${detailRow('IPv6', formatList(node.ipv6))}
-                ${detailRow('Trafico', traffic)}
-                ${detailRow('IPs bloqueadas', formatList(node.blocked_ipv4))}
-            </dl>
+            ${detailSection('Identidad', [
+                ['ID', node.id],
+                ['Tipo', node.type],
+                ['Nombre', node.name],
+                ['MAC', node.mac]
+            ])}
+            ${detailSection('Direccionamiento', [
+                ['IPv4', formatList(node.ipv4)],
+                ['IPv6', formatList(node.ipv6)]
+            ])}
+            ${detailSection('Estado y filtros', [
+                ['Conectado', formatBoolean(node.connected)],
+                ['Estado', node.state],
+                ['IP bloqueada', formatBoolean(node.ip_blocked)],
+                ['Trafico bloqueado', formatBoolean(node.traffic_blocked)],
+                ['Estado de trafico', traffic],
+                ['IPv4 bloqueadas', formatList(node.blocked_ipv4)],
+                ['Filtros IPv4 del switch', formatList(trafficFilters.blocked_ipv4)]
+            ])}
+            ${renderExtraSection(node, ['id', 'type', 'name', 'mac', 'ipv4', 'ipv6', 'connected', 'state', 'ip_blocked', 'traffic_blocked', 'blocked_ipv4', 'traffic_state', 'traffic_filters'])}
         `;
     }
 
@@ -362,18 +375,53 @@
                 ${statusBadge(degradation, degradation === 'healthy' ? 'is-success' : 'is-warning')}
                 ${statusBadge(isEdgeBlocked(edge) ? 'STP bloqueado' : 'Forwarding', isEdgeBlocked(edge) ? 'is-warning' : 'is-success')}
             </div>
-            <dl class="detail-list">
-                ${detailRow('Estado admin', formatAdminState(edge))}
-                ${detailRow('Puerto origen', edge.src_port || edge['s-port'])}
-                ${detailRow('Puerto destino', edge.dst_port)}
-                ${detailRow('Interfaz origen', edge.src_iface || edge['s-iface'])}
-                ${detailRow('Interfaz destino', edge.dst_iface)}
-                ${detailRow('STP', formatStp(edge))}
-                ${detailRow('Delay', formatTc(edge, 'delay'))}
-                ${detailRow('Loss', formatTc(edge, 'loss'))}
-                ${detailRow('Bandwidth', formatTc(edge, 'bandwidth'))}
-                ${detailRow('IPs bloqueadas', formatList(edge.blocked_ipv4))}
-            </dl>
+            ${detailSection('Extremos', [
+                ['Tipo', edge.type],
+                ['Host origen', edge['source-h']],
+                ['Switch destino', edge['target-s']],
+                ['Switch origen', edge.source],
+                ['Switch destino', edge.target],
+                ['MAC host', edge.mac],
+                ['Puerto origen', edge.src_port],
+                ['Puerto destino', edge.dst_port],
+                ['Puerto switch', edge['s-port']],
+                ['Interfaz origen', edge.src_iface],
+                ['Interfaz destino', edge.dst_iface],
+                ['Interfaz switch', edge['s-iface']]
+            ])}
+            ${detailSection('Estado operativo', [
+                ['Estado', edge.state],
+                ['Habilitado', formatBoolean(edge.enabled)],
+                ['Forwarding', formatBoolean(edge.forwarding)],
+                ['Descubierto', formatBoolean(edge.discovered)],
+                ['Estado inventario', edge.inventory_state],
+                ['Deshabilitado manualmente', formatBoolean(edge.manual_disabled)],
+                ['Estado admin', formatAdminState(edge)],
+                ['IPs bloqueadas', formatList(edge.blocked_ipv4)]
+            ])}
+            ${detailSection('STP', [
+                ['Estado STP', edge.stp_state],
+                ['STP bloqueado', formatBoolean(edge.stp_blocked)],
+                ['STP origen', edge.stp?.src_state],
+                ['STP destino', edge.stp?.dst_state],
+                ['Origen bloqueado', formatBoolean(edge.stp?.src_blocked)],
+                ['Destino bloqueado', formatBoolean(edge.stp?.dst_blocked)]
+            ])}
+            ${detailSection('Calidad y degradacion', [
+                ['Delay switch-host', edge.tc_sw_port?.delay],
+                ['Loss switch-host', edge.tc_sw_port?.loss],
+                ['Bandwidth switch-host', edge.tc_sw_port?.bandwidth],
+                ['Delay origen', edge.src_tc?.delay],
+                ['Loss origen', edge.src_tc?.loss],
+                ['Bandwidth origen', edge.src_tc?.bandwidth],
+                ['Delay destino', edge.dst_tc?.delay],
+                ['Loss destino', edge.dst_tc?.loss],
+                ['Bandwidth destino', edge.dst_tc?.bandwidth],
+                ['Degradacion origen', edge.src_degradation],
+                ['Degradacion destino', edge.dst_degradation],
+                ['Degradacion enlace', edge['degradation-link']]
+            ])}
+            ${renderExtraSection(edge, ['type', 'source-h', 'target-s', 'source', 'target', 'mac', 'src_port', 'dst_port', 's-port', 'src_iface', 'dst_iface', 's-iface', 'state', 'enabled', 'forwarding', 'discovered', 'inventory_state', 'manual_disabled', 'admin_state', 'blocked_ipv4', 'stp_state', 'stp_blocked', 'stp', 'tc_sw_port', 'src_tc', 'dst_tc', 'src_degradation', 'dst_degradation', 'degradation-link'])}
         `;
     }
 
@@ -386,6 +434,32 @@
         return `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(visibleValue)}</dd></div>`;
     }
 
+    function detailSection(title, rows) {
+        const renderedRows = rows
+            .filter(([, value]) => value !== undefined)
+            .map(([label, value]) => detailRow(label, value))
+            .join('');
+
+        if (!renderedRows) {
+            return '';
+        }
+
+        return `
+            <section class="detail-section">
+                <h4>${escapeHtml(title)}</h4>
+                <dl class="detail-list">${renderedRows}</dl>
+            </section>
+        `;
+    }
+
+    function renderExtraSection(item, knownKeys) {
+        const extraRows = Object.keys(item)
+            .filter(key => !knownKeys.includes(key))
+            .map(key => [key, formatValue(item[key])]);
+
+        return detailSection('Otros datos', extraRows);
+    }
+
     function statusBadge(text, type) {
         return `<span class="detail-badge ${type}">${escapeHtml(text)}</span>`;
     }
@@ -394,8 +468,41 @@
         return Array.isArray(value) && value.length ? value.join(', ') : 'No disponible';
     }
 
+    function formatBoolean(value) {
+        if (value === undefined) {
+            return undefined;
+        }
+
+        if (value === null) {
+            return 'No disponible';
+        }
+
+        return value ? 'Si' : 'No';
+    }
+
+    function formatValue(value) {
+        if (Array.isArray(value)) {
+            return formatList(value);
+        }
+
+        if (value && typeof value === 'object') {
+            return JSON.stringify(value);
+        }
+
+        if (typeof value === 'boolean') {
+            return formatBoolean(value);
+        }
+
+        return value;
+    }
+
     function isNodeBlocked(node) {
-        return Boolean(node.ip_blocked || node.traffic_blocked || (Array.isArray(node.blocked_ipv4) && node.blocked_ipv4.length));
+        return Boolean(
+            node.ip_blocked ||
+            node.traffic_blocked ||
+            (Array.isArray(node.blocked_ipv4) && node.blocked_ipv4.length) ||
+            (Array.isArray(node.traffic_filters?.blocked_ipv4) && node.traffic_filters.blocked_ipv4.length)
+        );
     }
 
     function isEdgeUp(edge) {
@@ -408,6 +515,12 @@
 
     function getEdgeDegradation(edge) {
         return edge['degradation-link'] || edge.src_degradation || edge.dst_degradation || 'healthy';
+    }
+
+    function isEdgeDegraded(edge) {
+        return [edge['degradation-link'], edge.src_degradation, edge.dst_degradation]
+            .filter(Boolean)
+            .some(value => value !== 'healthy');
     }
 
     function formatAdminState(edge) {

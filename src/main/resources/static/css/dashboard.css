@@ -755,6 +755,18 @@ button {
     margin: 0;
 }
 
+.detail-section {
+    margin-top: 14px;
+}
+
+.detail-section h4 {
+    color: #172554;
+    font-size: 0.82rem;
+    font-weight: 900;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+}
+
 .detail-list div {
     border-top: 1px solid #e2e8f0;
     padding-top: 9px;
