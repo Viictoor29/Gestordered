@@ -470,6 +470,7 @@ button {
 
 .topology-stage {
     min-height: 450px;
+    --topology-panel-height: 500px;
 }
 
 .topology-meta {
@@ -517,6 +518,46 @@ button {
     border-color: rgba(212, 175, 55, 0.4);
 }
 
+.topology-refresh {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px;
+    margin: -2px 0 14px;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.topology-refresh span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.topology-refresh i {
+    color: #D4AF37;
+}
+
+.topology-refresh-button {
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1e3c72;
+    min-height: 34px;
+    padding: 7px 10px;
+    font-size: 0.85rem;
+    font-weight: 900;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.topology-refresh-button:hover {
+    border-color: #D4AF37;
+    background: #fffbeb;
+}
+
 .topology-workspace {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 320px;
@@ -533,12 +574,17 @@ button {
     border-radius: 12px;
     background: #f8fafc;
     padding: 16px;
-    min-height: 410px;
+    height: var(--topology-panel-height);
+    min-height: var(--topology-panel-height);
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .topology-map {
     width: 100%;
-    min-height: 410px;
+    display: block;
+    height: var(--topology-panel-height);
+    min-height: var(--topology-panel-height);
     border: 1px solid #dbe3ef;
     border-radius: 12px;
     background:
@@ -550,7 +596,7 @@ button {
 
 .topology-edge line {
     stroke: #16a34a;
-    stroke-width: 3;
+    stroke-width: 3.5;
     stroke-linecap: round;
 }
 
@@ -575,7 +621,7 @@ button {
 
 .topology-edge text {
     fill: #475569;
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 800;
     paint-order: stroke;
     stroke: #f8fafc;
@@ -619,7 +665,7 @@ button {
 }
 
 .topology-node text {
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 900;
     text-anchor: middle;
     dominant-baseline: middle;
@@ -635,8 +681,31 @@ button {
 
 .topology-node .node-subtitle {
     fill: #334155;
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 800;
+}
+
+.topology-node .node-icon rect,
+.topology-node .node-icon circle,
+.topology-node .node-icon line {
+    filter: none;
+    stroke-width: 2;
+}
+
+.topology-node .node-icon-switch rect {
+    fill: rgba(255, 255, 255, 0.16);
+    stroke: #ffffff;
+}
+
+.topology-node .node-icon-switch circle {
+    fill: #D4AF37;
+    stroke: #D4AF37;
+}
+
+.topology-node .node-icon-host rect,
+.topology-node .node-icon-host line {
+    fill: #eef2f7;
+    stroke: #172554;
 }
 
 .topology-legend {
@@ -792,6 +861,73 @@ button {
     line-height: 1.5;
     margin: 14px 0 0;
     font-size: 0.9rem;
+}
+
+.switch-port-listing {
+    display: grid;
+    gap: 10px;
+}
+
+.switch-port-card {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 12px;
+}
+
+.switch-port-main {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.switch-port-main strong {
+    color: #172554;
+    font-size: 0.95rem;
+    font-weight: 900;
+}
+
+.switch-port-main span {
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-align: right;
+}
+
+.switch-port-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.switch-port-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+}
+
+.switch-port-list div {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 7px;
+}
+
+.switch-port-list dt {
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.switch-port-list dd {
+    color: #0f172a;
+    font-size: 0.82rem;
+    font-weight: 800;
+    margin: 2px 0 0;
+    overflow-wrap: anywhere;
 }
 
 .server-status.is-loading {
@@ -1050,7 +1186,8 @@ button {
     }
 
     .topology-map {
-        min-height: 320px;
+        height: min(var(--topology-panel-height), 420px);
+        min-height: min(var(--topology-panel-height), 420px);
     }
 
     .topology-meta {
@@ -1058,7 +1195,8 @@ button {
     }
 
     .topology-detail {
-        min-height: auto;
+        height: min(var(--topology-panel-height), 420px);
+        min-height: min(var(--topology-panel-height), 420px);
     }
 }
 
