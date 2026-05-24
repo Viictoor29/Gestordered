@@ -22,6 +22,7 @@ public class RoleRequestController {
             @ModelAttribute RoleRequest roleRequest,
             @RequestParam(defaultValue = "") String password,
             @RequestParam(defaultValue = "") String confirmPassword,
+            @RequestParam(defaultValue = "guest") String returnTo,
             RedirectAttributes redirectAttributes) {
         try {
             roleRequestService.createGuestRequest(roleRequest, password, confirmPassword);
@@ -30,12 +31,13 @@ public class RoleRequestController {
             redirectAttributes.addFlashAttribute("requestError", exception.getMessage());
         }
 
-        return "redirect:/guest";
+        return redirectByOrigin(returnTo);
     }
 
     @PostMapping("/guest/role-requests/status")
     public String findGuestRequestStatus(
             @RequestParam(defaultValue = "") String identifier,
+            @RequestParam(defaultValue = "guest") String returnTo,
             RedirectAttributes redirectAttributes) {
         try {
             roleRequestService.findGuestRequestByIdentifier(identifier)
@@ -48,6 +50,14 @@ public class RoleRequestController {
                     );
         } catch (IllegalArgumentException exception) {
             redirectAttributes.addFlashAttribute("statusError", exception.getMessage());
+        }
+
+        return redirectByOrigin(returnTo);
+    }
+
+    private String redirectByOrigin(String returnTo) {
+        if ("index".equals(returnTo)) {
+            return "redirect:/index";
         }
 
         return "redirect:/guest";

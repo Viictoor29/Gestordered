@@ -468,6 +468,349 @@ button {
     min-height: 450px;
 }
 
+.topology-stage {
+    min-height: 450px;
+}
+
+.topology-meta {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.topology-metric {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #334155;
+    padding: 12px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 10px;
+    row-gap: 2px;
+    align-items: center;
+}
+
+.topology-metric i {
+    grid-row: span 2;
+    color: #172554;
+}
+
+.topology-metric small {
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.topology-metric strong {
+    color: #172554;
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.topology-metric.is-warning {
+    background: #fffbeb;
+    border-color: rgba(212, 175, 55, 0.4);
+}
+
+.topology-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 14px;
+    align-items: stretch;
+}
+
+.topology-canvas {
+    min-width: 0;
+}
+
+.topology-detail {
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    background: #f8fafc;
+    padding: 16px;
+    min-height: 410px;
+}
+
+.topology-map {
+    width: 100%;
+    min-height: 410px;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    background:
+        linear-gradient(rgba(30, 60, 114, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30, 60, 114, 0.04) 1px, transparent 1px),
+        #f8fafc;
+    background-size: 34px 34px;
+}
+
+.topology-edge line {
+    stroke: #16a34a;
+    stroke-width: 3;
+    stroke-linecap: round;
+}
+
+.topology-edge {
+    cursor: pointer;
+    outline: none;
+}
+
+.topology-edge:hover line,
+.topology-edge.is-selected line {
+    stroke-width: 5;
+}
+
+.topology-edge.is-down line {
+    stroke: #dc2626;
+    stroke-dasharray: 10 8;
+}
+
+.topology-edge.is-blocked line {
+    stroke: #d97706;
+}
+
+.topology-edge text {
+    fill: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    paint-order: stroke;
+    stroke: #f8fafc;
+    stroke-width: 5px;
+    text-anchor: middle;
+}
+
+.topology-node rect,
+.topology-node circle {
+    stroke: #172554;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 8px 14px rgba(15, 23, 42, 0.16));
+}
+
+.topology-node {
+    cursor: pointer;
+    outline: none;
+}
+
+.topology-node:hover rect,
+.topology-node:hover circle,
+.topology-node.is-selected rect,
+.topology-node.is-selected circle {
+    stroke: #D4AF37;
+    stroke-width: 4;
+}
+
+.topology-node.is-switch rect {
+    fill: #1e3c72;
+}
+
+.topology-node.is-host circle {
+    fill: #ffffff;
+}
+
+.topology-node.is-blocked rect,
+.topology-node.is-blocked circle,
+.topology-node.is-disconnected rect,
+.topology-node.is-disconnected circle {
+    stroke: #dc2626;
+}
+
+.topology-node text {
+    font-size: 13px;
+    font-weight: 900;
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+.topology-node.is-switch .node-title {
+    fill: #ffffff;
+}
+
+.topology-node.is-host .node-title {
+    fill: #172554;
+}
+
+.topology-node .node-subtitle {
+    fill: #334155;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.topology-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 10px;
+    color: #334155;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.topology-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-dot.is-up {
+    background: #16a34a;
+}
+
+.legend-dot.is-down {
+    background: #dc2626;
+}
+
+.legend-dot.is-blocked {
+    background: #d97706;
+}
+
+.detail-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.detail-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: #1e3c72;
+    color: #D4AF37;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.detail-icon.is-host {
+    background: #ffffff;
+    border: 1px solid #dbe3ef;
+    color: #1e3c72;
+}
+
+.detail-icon.is-link {
+    background: #ecfdf3;
+    color: #067647;
+}
+
+.detail-heading p {
+    margin: 0 0 2px;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.detail-heading h3 {
+    margin: 0;
+    color: #172554;
+    font-size: 1.05rem;
+    font-weight: 900;
+    overflow-wrap: anywhere;
+}
+
+.detail-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.detail-badge {
+    border-radius: 999px;
+    padding: 6px 9px;
+    font-size: 0.75rem;
+    font-weight: 900;
+}
+
+.detail-badge.is-success {
+    background: #ecfdf3;
+    color: #067647;
+}
+
+.detail-badge.is-warning {
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.detail-badge.is-danger {
+    background: #fff1f3;
+    color: #b42318;
+}
+
+.detail-list {
+    display: grid;
+    gap: 9px;
+    margin: 0;
+}
+
+.detail-list div {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 9px;
+}
+
+.detail-list dt {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.detail-list dd {
+    color: #0f172a;
+    font-size: 0.88rem;
+    font-weight: 800;
+    margin: 2px 0 0;
+    overflow-wrap: anywhere;
+}
+
+.detail-help {
+    color: #475569;
+    line-height: 1.5;
+    margin: 14px 0 0;
+    font-size: 0.9rem;
+}
+
+.server-status.is-loading {
+    color: #1e3c72;
+    border-color: rgba(30, 60, 114, 0.28);
+}
+
+.server-status.is-loading i {
+    color: #D4AF37;
+}
+
+.server-status.is-connected {
+    color: #067647;
+    border-color: rgba(22, 163, 74, 0.28);
+    background: #ecfdf3;
+}
+
+.server-status.is-connected i {
+    color: #16a34a;
+}
+
+.server-status.is-error {
+    color: #b42318;
+    border-color: rgba(220, 38, 38, 0.28);
+    background: #fff1f3;
+}
+
+.server-status.is-error i {
+    color: #dc2626;
+}
+
 .guest-register-link {
     width: 100%;
     margin-top: 18px;
@@ -640,8 +983,13 @@ button {
     .dashboard-grid-stats,
     .dashboard-content-grid,
     .guest-dashboard-grid,
-    .guest-dashboard-layout {
+    .guest-dashboard-layout,
+    .topology-workspace {
         grid-template-columns: 1fr;
+    }
+
+    .topology-meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .server-form {
@@ -683,6 +1031,22 @@ button {
 
     .topology-view-card .empty-state {
         min-height: 320px;
+    }
+
+    .topology-stage {
+        min-height: 320px;
+    }
+
+    .topology-map {
+        min-height: 320px;
+    }
+
+    .topology-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .topology-detail {
+        min-height: auto;
     }
 }
 
