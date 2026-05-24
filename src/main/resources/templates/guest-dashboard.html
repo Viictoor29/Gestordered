@@ -122,7 +122,7 @@
                 </button>
             </div>
 
-            <form class="account-request-form" th:action="@{/guest/role-requests}" action="/guest/role-requests" method="post">
+            <form class="account-request-form" th:action="@{/guest/role-requests}" action="/guest/role-requests" method="post" data-role-request-form="create">
                 <label>
                     Nombre completo
                     <input type="text" name="fullName" placeholder="Nombre y apellidos" required>
@@ -207,7 +207,7 @@
                 </button>
             </div>
 
-            <form class="account-request-form" th:action="@{/guest/role-requests/status}" action="/guest/role-requests/status" method="post">
+            <form class="account-request-form" th:action="@{/guest/role-requests/status}" action="/guest/role-requests/status" method="post" data-role-request-form="status">
                 <label class="account-request-wide">
                     DNI, email o usuario
                     <input type="text" name="identifier" placeholder="00000000A, correo@ejemplo.com o usuario" required>
