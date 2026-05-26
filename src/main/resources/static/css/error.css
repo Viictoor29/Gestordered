@@ -1,0 +1,137 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: #eef3f9;
+    color: #102047;
+}
+
+.error-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 32px 18px;
+}
+
+.error-panel {
+    width: min(720px, 100%);
+    border: 1px solid #d8e2ef;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 22px 60px rgba(15, 23, 42, 0.16);
+    padding: 40px;
+}
+
+.error-mark {
+    width: 58px;
+    height: 58px;
+    border-radius: 12px;
+    background: #fff7d6;
+    color: #c9a227;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 22px;
+}
+
+.error-kicker {
+    color: #334155;
+    font-size: 0.86rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+}
+
+.error-panel h1 {
+    color: #102047;
+    font-size: 2.4rem;
+    line-height: 1.1;
+    margin: 0 0 14px;
+}
+
+.error-description {
+    color: #475569;
+    font-size: 1rem;
+    line-height: 1.65;
+    margin: 0 0 22px;
+}
+
+.error-details {
+    display: grid;
+    gap: 10px;
+    margin: 0 0 28px;
+}
+
+.error-details div {
+    border: 1px solid #d8e2ef;
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 12px 14px;
+}
+
+.error-details dt {
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 900;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.error-details dd {
+    color: #102047;
+    font-weight: 800;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.error-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.error-button {
+    min-height: 46px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 18px;
+    color: #102047;
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.error-button.primary {
+    background: #d4af37;
+}
+
+.error-button.secondary {
+    border: 2px solid #d8e2ef;
+    background: #ffffff;
+}
+
+.error-button:hover {
+    transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+    .error-panel {
+        padding: 28px 20px;
+    }
+
+    .error-panel h1 {
+        font-size: 2rem;
+    }
+
+    .error-actions,
+    .error-button {
+        width: 100%;
+    }
+}

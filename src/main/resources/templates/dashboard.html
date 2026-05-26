@@ -531,12 +531,14 @@
                                             <i class="fas fa-eye"></i>
                                             Ver
                                         </a>
-                                        <form th:action="@{/dashboard/operators/{id}/delete(id=${operator.id})}" method="post">
-                                            <button type="submit" class="btn-panel btn-panel-danger">
-                                                <i class="fas fa-trash"></i>
-                                                Borrar
-                                            </button>
-                                        </form>
+                                        <button type="button"
+                                                class="btn-panel btn-panel-danger"
+                                                data-action="open-operator-delete"
+                                                th:data-delete-action="@{/dashboard/operators/{id}/delete(id=${operator.id})}"
+                                                th:data-operator-name="${operator.fullName ?: operator.username}">
+                                            <i class="fas fa-trash"></i>
+                                            Borrar
+                                        </button>
                                     </div>
                                 </article>
                             </div>
@@ -573,6 +575,41 @@
                             <div><dt>Actualizado</dt><dd th:text="${selectedOperator.updatedAt != null ? #dates.format(T(java.util.Date).from(selectedOperator.updatedAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
                         </dl>
                     </article>
+                </div>
+
+                <div class="account-request-modal" id="operator-delete-modal" aria-hidden="true">
+                    <div class="account-request-backdrop" data-action="close-operator-delete"></div>
+                    <section class="account-request-dialog request-status-dialog" role="dialog" aria-modal="true" aria-labelledby="operator-delete-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Confirmación requerida</p>
+                                <h2 id="operator-delete-title">Eliminar operador</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-operator-delete" aria-label="Cerrar borrado">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <form class="operator-request-form" id="operator-delete-form" method="post">
+                            <p class="reject-modal-target" id="operator-delete-target">Operador seleccionado</p>
+                            <label>
+                                Contraseña del administrador
+                                <span class="profile-password-field">
+                                    <input type="password" name="adminPassword" autocomplete="current-password" required>
+                                    <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </span>
+                            </label>
+                            <div class="modal-actions">
+                                <button type="button" class="btn-panel btn-panel-secondary" data-action="close-operator-delete">Cancelar</button>
+                                <button type="submit" class="btn-panel btn-panel-danger">
+                                    <i class="fas fa-trash"></i>
+                                    Eliminar
+                                </button>
+                            </div>
+                        </form>
+                    </section>
                 </div>
             </section>
         </main>
@@ -638,6 +675,40 @@
 
             document.querySelectorAll('[data-action="close-admin-reject"]').forEach(button => {
                 button.addEventListener('click', closeAdminRejectModal);
+            });
+        }
+
+        const operatorDeleteModal = document.getElementById('operator-delete-modal');
+        const operatorDeleteForm = document.getElementById('operator-delete-form');
+        const operatorDeleteTarget = document.getElementById('operator-delete-target');
+
+        if (operatorDeleteModal && operatorDeleteForm) {
+            const passwordInput = operatorDeleteForm.querySelector('input[name="adminPassword"]');
+
+            const closeOperatorDeleteModal = () => {
+                operatorDeleteModal.classList.remove('is-open');
+                operatorDeleteModal.setAttribute('aria-hidden', 'true');
+                operatorDeleteForm.removeAttribute('action');
+                operatorDeleteForm.reset();
+            };
+
+            document.querySelectorAll('[data-action="open-operator-delete"]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.dataset.deleteAction;
+                    if (!action) {
+                        return;
+                    }
+
+                    operatorDeleteForm.action = action;
+                    operatorDeleteTarget.textContent = `Vas a eliminar a ${button.dataset.operatorName || 'este operador'}.`;
+                    operatorDeleteModal.classList.add('is-open');
+                    operatorDeleteModal.setAttribute('aria-hidden', 'false');
+                    passwordInput.focus();
+                });
+            });
+
+            document.querySelectorAll('[data-action="close-operator-delete"]').forEach(button => {
+                button.addEventListener('click', closeOperatorDeleteModal);
             });
         }
 

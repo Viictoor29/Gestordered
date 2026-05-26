@@ -1,9 +1,11 @@
 package es.unex.cume.gestodered.config;
 
+import jakarta.servlet.http.Cookie;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -17,7 +19,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserDetailsService userDetailsService) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
 
@@ -25,6 +27,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/",
                     "/index",
+                    "/index.html",
                     "/login",
                     "/register",
                     "/guest",
@@ -50,18 +53,35 @@ public class SecurityConfig {
                 .loginProcessingUrl("/login")
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .defaultSuccessUrl("/dashboard", true)
+                .successHandler((request, response, authentication) -> {
+                    if (request.getParameter("remember") == null) {
+                        Cookie rememberCookie = new Cookie("remember-me", "");
+                        rememberCookie.setPath("/");
+                        rememberCookie.setHttpOnly(true);
+                        rememberCookie.setMaxAge(0);
+                        response.addCookie(rememberCookie);
+                    }
+
+                    response.sendRedirect("/dashboard");
+                })
                 .failureHandler((request, response, exception) -> {
                     response.sendRedirect("/?error=true");
                 })
                 .permitAll()
             )
 
+            .rememberMe(remember -> remember
+                .rememberMeParameter("remember")
+                .key("gestodered-remember-me")
+                .tokenValiditySeconds(60 * 60 * 24 * 14)
+                .userDetailsService(userDetailsService)
+            )
+
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/")
                 .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID")
+                .deleteCookies("JSESSIONID", "remember-me")
                 .permitAll()
             )
 

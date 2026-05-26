@@ -204,10 +204,13 @@ public class DashboardController {
     @PostMapping("/dashboard/operators/{id}/delete")
     public String deleteOperator(
             @PathVariable String id,
+            @RequestParam(defaultValue = "") String adminPassword,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
         try {
             User admin = requireAdmin(authentication);
+            validateCurrentPassword(admin, adminPassword);
+
             if (admin.getId() != null && admin.getId().equals(id)) {
                 throw new IllegalStateException("No puedes borrar tu propio usuario.");
             }
@@ -218,8 +221,12 @@ public class DashboardController {
                 throw new IllegalStateException("Solo puedes borrar operadores desde este apartado.");
             }
 
+            long deletedRequests = roleRequestService.deleteRequestsForUser(operator);
             userRepository.delete(operator);
-            redirectAttributes.addFlashAttribute("operatorSuccess", "Operador eliminado correctamente.");
+            redirectAttributes.addFlashAttribute(
+                    "operatorSuccess",
+                    "Operador eliminado correctamente. Peticiones eliminadas: " + deletedRequests + "."
+            );
         } catch (IllegalArgumentException | IllegalStateException | SecurityException exception) {
             redirectAttributes.addFlashAttribute("operatorError", messageOrDefault(exception, "No se pudo eliminar el operador."));
         }
@@ -412,6 +419,16 @@ public class DashboardController {
 
         if (user.getPasswordHash() == null || !passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
             throw new IllegalArgumentException("La contraseña actual no es correcta.");
+        }
+    }
+
+    private void validateCurrentPassword(User user, String currentPassword) {
+        if (isBlank(currentPassword)) {
+            throw new IllegalArgumentException("La contraseña del administrador es obligatoria.");
+        }
+
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new IllegalArgumentException("La contraseña del administrador no es correcta.");
         }
     }
 

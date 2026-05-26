@@ -217,6 +217,27 @@ public class RoleRequestService {
         return roleRequestRepository.findByUserId(objectId);
     }
 
+    public long deleteRequestsForUser(User user) {
+        if (user == null) {
+            return 0;
+        }
+
+        ObjectId userId = toObjectId(user.getId());
+        String username = normalize(user.getUsername());
+        String email = normalizeLower(user.getEmail());
+        String dni = normalizeUpper(user.getDni());
+
+        List<RoleRequest> requests = roleRequestRepository.findAll().stream()
+                .filter(request -> (userId != null && userId.equals(request.getUserId()))
+                        || (!isBlank(username) && username.equals(normalize(request.getUsername())))
+                        || (!isBlank(email) && email.equals(normalizeLower(request.getEmail())))
+                        || (!isBlank(dni) && dni.equals(normalizeUpper(request.getDni()))))
+                .toList();
+
+        roleRequestRepository.deleteAll(requests);
+        return requests.size();
+    }
+
     public Optional<RoleRequest> findGuestRequestByIdentifier(String identifier) {
         String cleanIdentifier = normalize(identifier);
 
@@ -267,7 +288,8 @@ public class RoleRequestService {
             user.setUpdatedAt(Instant.now());
             userRepository.save(user);
         } else {
-            createUserFromGuestRequest(request);
+            User createdUser = createUserFromGuestRequest(request);
+            request.setUserId(toObjectId(createdUser.getId()));
         }
 
         request.setStatus(STATUS_APPROVED);
@@ -322,7 +344,7 @@ public class RoleRequestService {
         }
     }
 
-    private void createUserFromGuestRequest(RoleRequest request) {
+    private User createUserFromGuestRequest(RoleRequest request) {
         if (isBlank(request.getPasswordHash())) {
             throw new IllegalStateException("La solicitud aprobada no tiene credenciales para crear la cuenta");
         }
@@ -341,7 +363,7 @@ public class RoleRequestService {
         user.setCreatedAt(Instant.now());
         user.setUpdatedAt(Instant.now());
 
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
     private void updateUserFromApprovedRequest(User user, RoleRequest request) {

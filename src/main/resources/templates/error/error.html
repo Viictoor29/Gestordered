@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${status != null ? 'Error ' + status : 'Error'} + ' - Gestor de Red'">Error - Gestor de Red</title>
+    <link rel="icon" href="/favicon.ico?v=20260526">
+    <link rel="shortcut icon" href="/favicon.ico?v=20260526">
+    <link rel="stylesheet" href="/css/error.css">
+</head>
+<body>
+    <main class="error-page">
+        <section class="error-panel">
+            <div class="error-mark">
+                <span>!</span>
+            </div>
+
+            <p class="error-kicker">Algo no ha ido bien</p>
+            <h1 th:text="${status != null ? 'Error ' + status : 'Error inesperado'}">Error inesperado</h1>
+
+            <p class="error-description"
+               th:text="${message != null && !#strings.isEmpty(message) ? message : 'Se ha producido un problema al procesar la petición. Puedes volver al inicio e intentarlo de nuevo.'}">
+                Se ha producido un problema al procesar la petición.
+            </p>
+
+            <dl class="error-details">
+                <div th:if="${path != null}">
+                    <dt>Ruta</dt>
+                    <dd th:text="${path}">/ruta</dd>
+                </div>
+                <div th:if="${error != null}">
+                    <dt>Tipo</dt>
+                    <dd th:text="${error}">Error</dd>
+                </div>
+            </dl>
+
+            <div class="error-actions">
+                <a href="/" class="error-button primary">Volver al inicio</a>
+                <a href="/dashboard" class="error-button secondary">Ir al panel</a>
+            </div>
+        </section>
+    </main>
+
+</body>
+</html>

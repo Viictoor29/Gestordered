@@ -73,7 +73,7 @@ public class RoleRequestController {
             redirectAttributes.addFlashAttribute("operatorRequestError", "No tienes permisos para enviar esta solicitud.");
         }
 
-        return "redirect:/dashboard/requests";
+        return "redirect:/dashboard/topology";
     }
 
 

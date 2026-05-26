@@ -623,13 +623,15 @@ button {
 
 .operator-request-form label {
     color: #1e293b;
+    display: grid;
     font-size: 0.9rem;
     font-weight: 800;
+    gap: 8px;
 }
 
+.operator-request-form input,
 .operator-request-form textarea {
     width: 100%;
-    margin-top: 8px;
     border: 2px solid #cbd5e1;
     border-radius: 8px;
     color: #0f172a;
@@ -639,6 +641,19 @@ button {
     font: inherit;
 }
 
+.operator-request-form input {
+    min-height: 50px;
+}
+
+.operator-request-form .profile-password-field {
+    width: 100%;
+}
+
+.operator-request-form .profile-password-field input {
+    margin: 0;
+}
+
+.operator-request-form input:focus,
 .operator-request-form textarea:focus {
     outline: none;
     border-color: #D4AF37;
