@@ -664,6 +664,52 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.pending-request-dialog {
+    max-width: 660px;
+}
+
+.pending-request-body {
+    border: 2px solid #dbe3ef;
+    border-radius: 10px;
+    background: #f8fafc;
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 16px;
+    align-items: center;
+    padding: 18px;
+}
+
+.pending-request-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 10px;
+    background: #fff7d6;
+    color: #c9a227;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.45rem;
+}
+
+.pending-request-body h3 {
+    color: #102047;
+    font-size: 1.08rem;
+    line-height: 1.25;
+    margin: 0 0 5px;
+}
+
+.pending-request-body p {
+    color: #475569;
+    font-weight: 700;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.pending-request-actions {
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
 .admin-actions {
     display: grid;
     gap: 12px;
@@ -1584,6 +1630,14 @@ button {
 .account-request-feedback,
 .modal-actions {
     grid-column: 1 / -1;
+}
+
+.account-request-note {
+    grid-column: 1 / -1;
+    color: #475569;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin: 0;
 }
 
 .account-request-feedback {

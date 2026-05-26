@@ -34,12 +34,13 @@
                    th:classappend="${activeSection == 'network'} ? ' active' : ''">
                     <i class="fas fa-diagram-project"></i><span>Topología</span>
                 </a>
-                <a href="/dashboard/requests"
+                <a href="/dashboard"
                    th:unless="${isAdmin}"
-                   data-action="open-operator-request">
+                   th:data-action="${hasPendingUserRoleRequest} ? 'open-operator-pending' : 'open-operator-request'"
+                   th:title="${hasPendingUserRoleRequest} ? 'Ya tienes una solicitud pendiente' : 'Solicitar permisos'">
                     <i class="fas fa-paper-plane"></i><span>Solicitar permisos</span>
                 </a>
-                <a href="/dashboard/requests"
+                <a href="/dashboard"
                    th:unless="${isAdmin}"
                    data-action="open-operator-status">
                     <i class="fas fa-list-check"></i><span>Ver peticiones</span>
@@ -190,27 +191,10 @@
                 </article>
             </section>
 
-            <section id="requests" class="dashboard-content-grid" th:if="${activeSection == 'requests'}">
-                <article class="dashboard-card panel-card">
-                    <div class="panel-header">
-                        <div>
-                            <p>Permisos</p>
-                            <h2>Solicitud de administrador</h2>
-                        </div>
-                    </div>
-
-                    <p class="account-request-feedback is-success" th:if="${operatorRequestSuccess}" th:text="${operatorRequestSuccess}"></p>
-                    <p class="account-request-feedback is-error" th:if="${operatorRequestError}" th:text="${operatorRequestError}"></p>
-
-                    <div class="empty-state compact-empty-state">
-                        <i class="fas fa-id-card"></i>
-                        <h3>Gestion de permisos</h3>
-                        <p>Usa el menu lateral para solicitar permisos o consultar tus peticiones.</p>
-                    </div>
-                </article>
-            </section>
-
             <th:block th:unless="${isAdmin}">
+                <p class="account-request-feedback is-success" th:if="${operatorRequestSuccess}" th:text="${operatorRequestSuccess}"></p>
+                <p class="account-request-feedback is-error" th:if="${operatorRequestError}" th:text="${operatorRequestError}"></p>
+
                 <div class="account-request-modal" id="operator-request-modal" aria-hidden="true">
                     <div class="account-request-backdrop" data-action="close-operator-request"></div>
                     <section class="account-request-dialog" role="dialog" aria-modal="true" aria-labelledby="operator-request-title">
@@ -257,7 +241,7 @@
                             <article class="role-request-item" th:each="request : ${userRoleRequests}">
                                 <div class="role-request-header">
                                     <div>
-                                        <p th:text="${(request.currentRole ?: 'OPERATOR') + ' -> ' + (request.requestedRole ?: 'ADMIN')}">OPERATOR -> ADMIN</p>
+                                        <p th:text="${(request.currentRole == 'ADMIN' ? 'Administrador' : (request.currentRole == 'GUEST' ? 'Invitado' : 'Operador')) + ' -> ' + (request.requestedRole == 'ADMIN' ? 'Administrador' : (request.requestedRole == 'GUEST' ? 'Invitado' : 'Operador'))}">Operador -> Administrador</p>
                                         <h3 th:text="${request.status == 'APPROVED'} ? 'Aprobada' : (${request.status == 'REJECTED'} ? 'Rechazada' : 'Pendiente')">Pendiente</h3>
                                     </div>
                                     <span class="detail-badge"
@@ -286,6 +270,37 @@
                             <i class="fas fa-list-check"></i>
                             <h3>No has enviado solicitudes</h3>
                             <p>Cuando envies una solicitud, podras consultar su estado aqui.</p>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="account-request-modal" id="operator-pending-modal" aria-hidden="true">
+                    <div class="account-request-backdrop" data-action="close-operator-pending"></div>
+                    <section class="account-request-dialog request-status-dialog pending-request-dialog" role="dialog" aria-modal="true" aria-labelledby="operator-pending-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Solicitud en revisión</p>
+                                <h2 id="operator-pending-title">Ya tienes una petición pendiente</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-operator-pending" aria-label="Cerrar aviso">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div class="pending-request-body">
+                            <span class="pending-request-icon"><i class="fas fa-clock"></i></span>
+                            <div>
+                                <h3>Hay una petición en curso</h3>
+                                <p>Espera a que un administrador revise tu solicitud antes de enviar otra.</p>
+                            </div>
+                        </div>
+
+                        <div class="modal-actions pending-request-actions">
+                            <button type="button" class="btn-panel btn-panel-secondary" data-action="close-operator-pending">Cerrar</button>
+                            <button type="button" class="btn-panel" data-action="switch-pending-to-status">
+                                <i class="fas fa-list-check"></i>
+                                Ver peticiones
+                            </button>
                         </div>
                     </section>
                 </div>
@@ -348,7 +363,7 @@
                         <article class="role-request-item" th:each="request : ${roleRequests}">
                             <div class="role-request-header">
                                 <div>
-                                    <p th:text="${(request.currentRole ?: 'GUEST') + ' -> ' + (request.requestedRole ?: 'OPERATOR')}">GUEST -> OPERATOR</p>
+                                    <p th:text="${(request.currentRole == 'ADMIN' ? 'Administrador' : (request.currentRole == 'OPERATOR' ? 'Operador' : 'Invitado')) + ' -> ' + (request.requestedRole == 'ADMIN' ? 'Administrador' : (request.requestedRole == 'GUEST' ? 'Invitado' : 'Operador'))}">Invitado -> Operador</p>
                                     <h3 th:text="${request.fullName ?: request.username}">Nombre completo</h3>
                                 </div>
                                 <span class="detail-badge"
@@ -361,8 +376,8 @@
                                 <div><dt>Email</dt><dd th:text="${request.email ?: 'Sin indicar'}">email</dd></div>
                                 <div><dt>DNI</dt><dd th:text="${request.dni ?: 'Sin indicar'}">dni</dd></div>
                                 <div><dt>Telefono</dt><dd th:text="${request.phone ?: 'Sin indicar'}">telefono</dd></div>
-                                <div><dt>Rol actual</dt><dd th:text="${request.currentRole ?: 'GUEST'}">GUEST</dd></div>
-                                <div><dt>Rol solicitado</dt><dd th:text="${request.requestedRole ?: 'OPERATOR'}">OPERATOR</dd></div>
+                                <div><dt>Rol actual</dt><dd th:text="${request.currentRole == 'ADMIN' ? 'Administrador' : (request.currentRole == 'OPERATOR' ? 'Operador' : 'Invitado')}">Invitado</dd></div>
+                                <div><dt>Rol solicitado</dt><dd th:text="${request.requestedRole == 'ADMIN' ? 'Administrador' : (request.requestedRole == 'GUEST' ? 'Invitado' : 'Operador')}">Operador</dd></div>
                                 <div><dt>Creada</dt><dd th:text="${request.createdAt != null ? #dates.format(T(java.util.Date).from(request.createdAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
                                 <div><dt>Revisada</dt><dd th:text="${request.reviewedAt != null ? #dates.format(T(java.util.Date).from(request.reviewedAt), 'dd/MM/yyyy HH:mm') : 'Pendiente'}">pendiente</dd></div>
                             </dl>
@@ -643,6 +658,24 @@
 
         bindModal('open-operator-request', 'close-operator-request', 'operator-request-modal');
         bindModal('open-operator-status', 'close-operator-status', 'operator-status-modal');
+        bindModal('open-operator-pending', 'close-operator-pending', 'operator-pending-modal');
+
+        document.querySelectorAll('[data-action="switch-pending-to-status"]').forEach(button => {
+            button.addEventListener('click', () => {
+                const pendingModal = document.getElementById('operator-pending-modal');
+                const statusModal = document.getElementById('operator-status-modal');
+
+                if (pendingModal) {
+                    pendingModal.classList.remove('is-open');
+                    pendingModal.setAttribute('aria-hidden', 'true');
+                }
+
+                if (statusModal) {
+                    statusModal.classList.add('is-open');
+                    statusModal.setAttribute('aria-hidden', 'false');
+                }
+            });
+        });
 
         const adminRejectModal = document.getElementById('admin-reject-modal');
         const adminRejectForm = document.getElementById('admin-reject-form');

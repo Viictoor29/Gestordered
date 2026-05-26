@@ -136,8 +136,13 @@ public class RoleRequestService {
             throw new IllegalArgumentException("El usuario no puede ser nulo");
         }
 
+        ObjectId userId = toObjectId(user.getId());
+        if (userId != null && roleRequestRepository.findByUserIdAndStatus(userId, STATUS_PENDING).isPresent()) {
+            throw new IllegalStateException("Ya tienes una solicitud pendiente. Espera a que un administrador la revise.");
+        }
+
         RoleRequest request = new RoleRequest();
-        request.setUserId(toObjectId(user.getId()));
+        request.setUserId(userId);
         request.setUsername(user.getUsername());
         request.setFullName(user.getFullName());
         request.setEmail(user.getEmail());
@@ -217,25 +222,36 @@ public class RoleRequestService {
         return roleRequestRepository.findByUserId(objectId);
     }
 
+    public List<RoleRequest> findRequestsForUser(User user) {
+        if (user == null) {
+            return List.of();
+        }
+
+        return findRequestsMatchingUser(user);
+    }
+
     public long deleteRequestsForUser(User user) {
         if (user == null) {
             return 0;
         }
 
+        List<RoleRequest> requests = findRequestsMatchingUser(user);
+        roleRequestRepository.deleteAll(requests);
+        return requests.size();
+    }
+
+    private List<RoleRequest> findRequestsMatchingUser(User user) {
         ObjectId userId = toObjectId(user.getId());
         String username = normalize(user.getUsername());
         String email = normalizeLower(user.getEmail());
         String dni = normalizeUpper(user.getDni());
 
-        List<RoleRequest> requests = roleRequestRepository.findAll().stream()
+        return roleRequestRepository.findAll().stream()
                 .filter(request -> (userId != null && userId.equals(request.getUserId()))
                         || (!isBlank(username) && username.equals(normalize(request.getUsername())))
                         || (!isBlank(email) && email.equals(normalizeLower(request.getEmail())))
                         || (!isBlank(dni) && dni.equals(normalizeUpper(request.getDni()))))
                 .toList();
-
-        roleRequestRepository.deleteAll(requests);
-        return requests.size();
     }
 
     public Optional<RoleRequest> findGuestRequestByIdentifier(String identifier) {

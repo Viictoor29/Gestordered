@@ -89,7 +89,7 @@ public class DashboardController {
                     .findFirst()
                     .orElse(null));
         } else {
-            var userRoleRequests = roleRequestService.findByUserId(user.getId()).stream()
+            var userRoleRequests = roleRequestService.findRequestsForUser(user).stream()
                     .sorted(Comparator.comparing(
                             request -> request.getCreatedAt() == null ? Instant.EPOCH : request.getCreatedAt(),
                             Comparator.reverseOrder()))
@@ -255,10 +255,6 @@ public class DashboardController {
         }
 
         if ("ADMIN".equals(role) && "operators".equals(normalized)) {
-            return normalized;
-        }
-
-        if (!"ADMIN".equals(role) && "requests".equals(normalized)) {
             return normalized;
         }
 

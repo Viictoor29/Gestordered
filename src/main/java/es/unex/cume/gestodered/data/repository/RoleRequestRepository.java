@@ -19,6 +19,8 @@ public interface RoleRequestRepository extends MongoRepository<RoleRequest, Stri
 
     List<RoleRequest> findByUserId(ObjectId userId);
 
+    Optional<RoleRequest> findByUserIdAndStatus(ObjectId userId, String status);
+
     Optional<RoleRequest> findByDniAndStatus(String dni, String status);
 
     Optional<RoleRequest> findByEmailAndStatus(String email, String status);
