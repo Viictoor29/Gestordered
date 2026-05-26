@@ -10,9 +10,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Service
 public class RoleRequestService {
@@ -87,6 +89,7 @@ public class RoleRequestService {
         request.setCurrentRole(defaultIfBlank(normalizeRole(request.getCurrentRole()), DEFAULT_CURRENT_ROLE));
         request.setRequestedRole(defaultIfBlank(normalizeRole(request.getRequestedRole()), DEFAULT_REQUESTED_ROLE));
         request.setReason(defaultIfNull(normalize(request.getReason()), ""));
+        request.setRejectionReason(null);
         request.setStatus(STATUS_PENDING);
         request.setReviewedBy(null);
         request.setCreatedAt(Instant.now());
@@ -108,6 +111,10 @@ public class RoleRequestService {
             throw new IllegalArgumentException("La contraseña es obligatoria");
         }
 
+        if (password.length() < 8) {
+            throw new IllegalArgumentException("La contraseña debe tener al menos 8 caracteres");
+        }
+
         if (!password.equals(confirmPassword)) {
             throw new IllegalArgumentException("Las contraseñas no coinciden");
         }
@@ -121,6 +128,10 @@ public class RoleRequestService {
     }
 
     public RoleRequest createRequestForUser(User user, String requestedRole) {
+        return createRequestForUser(user, requestedRole, "");
+    }
+
+    public RoleRequest createRequestForUser(User user, String requestedRole, String reason) {
         if (user == null) {
             throw new IllegalArgumentException("El usuario no puede ser nulo");
         }
@@ -134,12 +145,46 @@ public class RoleRequestService {
         request.setPhone(user.getPhone());
         request.setCurrentRole(user.getRole());
         request.setRequestedRole(requestedRole);
+        request.setReason(reason);
 
         return createRequest(request);
     }
 
     public List<RoleRequest> findAll() {
         return roleRequestRepository.findAll();
+    }
+
+    public List<RoleRequest> findFiltered(String status, String requestedRole, String currentRole, String search) {
+        String cleanStatus = normalizeUpper(status);
+        String cleanRequestedRole = normalizeRole(requestedRole);
+        String cleanCurrentRole = normalizeRole(currentRole);
+        String cleanSearch = normalizeLower(search);
+
+        Stream<RoleRequest> requests = roleRequestRepository.findAll().stream();
+
+        if (!isBlank(cleanStatus)) {
+            requests = requests.filter(request -> cleanStatus.equals(normalizeUpper(request.getStatus())));
+        }
+
+        if (!isBlank(cleanRequestedRole)) {
+            requests = requests.filter(request -> cleanRequestedRole.equals(normalizeRole(request.getRequestedRole())));
+        }
+
+        if (!isBlank(cleanCurrentRole)) {
+            requests = requests.filter(request -> cleanCurrentRole.equals(normalizeRole(request.getCurrentRole())));
+        }
+
+        if (!isBlank(cleanSearch)) {
+            requests = requests.filter(request -> containsIgnoreCase(request.getUsername(), cleanSearch)
+                    || containsIgnoreCase(request.getFullName(), cleanSearch)
+                    || containsIgnoreCase(request.getEmail(), cleanSearch)
+                    || containsIgnoreCase(request.getDni(), cleanSearch)
+                    || containsIgnoreCase(request.getPhone(), cleanSearch));
+        }
+
+        return requests
+                .sorted(Comparator.comparing(RoleRequest::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
     }
 
     public Optional<RoleRequest> findById(String id) {
@@ -208,24 +253,6 @@ public class RoleRequestService {
     }
 
     public RoleRequest approveRequest(String requestId, String reviewerUserId) {
-        RoleRequest request = reviewRequest(requestId, reviewerUserId, STATUS_APPROVED);
-
-        if (request.getUserId() != null) {
-            userRepository.findById(request.getUserId().toHexString()).ifPresent(user -> {
-                user.setRole(request.getRequestedRole());
-                user.setUpdatedAt(Instant.now());
-                userRepository.save(user);
-            });
-        }
-
-        return request;
-    }
-
-    public RoleRequest rejectRequest(String requestId, String reviewerUserId) {
-        return reviewRequest(requestId, reviewerUserId, STATUS_REJECTED);
-    }
-
-    private RoleRequest reviewRequest(String requestId, String reviewerUserId, String status) {
         RoleRequest request = roleRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
 
@@ -233,7 +260,39 @@ public class RoleRequestService {
             throw new IllegalStateException("La solicitud ya fue revisada");
         }
 
-        request.setStatus(status);
+        if (request.getUserId() != null) {
+            User user = userRepository.findById(request.getUserId().toHexString())
+                    .orElseThrow(() -> new IllegalStateException("No se encontro el usuario asociado a la solicitud"));
+            updateUserFromApprovedRequest(user, request);
+            user.setUpdatedAt(Instant.now());
+            userRepository.save(user);
+        } else {
+            createUserFromGuestRequest(request);
+        }
+
+        request.setStatus(STATUS_APPROVED);
+        request.setReviewedBy(toObjectId(reviewerUserId));
+        request.setReviewedAt(Instant.now());
+
+        return roleRequestRepository.save(request);
+    }
+
+    public RoleRequest rejectRequest(String requestId, String reviewerUserId, String rejectionReason) {
+        String cleanRejectionReason = normalize(rejectionReason);
+
+        if (isBlank(cleanRejectionReason)) {
+            throw new IllegalArgumentException("La justificacion del rechazo es obligatoria");
+        }
+
+        RoleRequest request = roleRequestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
+
+        if (!STATUS_PENDING.equals(request.getStatus())) {
+            throw new IllegalStateException("La solicitud ya fue revisada");
+        }
+
+        request.setStatus(STATUS_REJECTED);
+        request.setRejectionReason(cleanRejectionReason);
         request.setReviewedBy(toObjectId(reviewerUserId));
         request.setReviewedAt(Instant.now());
 
@@ -256,6 +315,42 @@ public class RoleRequestService {
         if (!isBlank(dni) && userRepository.findByDni(dni).isPresent()) {
             throw new IllegalStateException("Ya existe una cuenta con ese DNI");
         }
+
+        String phone = normalizePhone(request.getPhone());
+        if (!isBlank(phone) && userRepository.findByPhone(phone).isPresent()) {
+            throw new IllegalStateException("Ya existe una cuenta con ese telefono");
+        }
+    }
+
+    private void createUserFromGuestRequest(RoleRequest request) {
+        if (isBlank(request.getPasswordHash())) {
+            throw new IllegalStateException("La solicitud aprobada no tiene credenciales para crear la cuenta");
+        }
+
+        validateGuestAccountDoesNotExist(request);
+
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setDni(request.getDni());
+        user.setPhone(normalizePhone(request.getPhone()));
+        user.setPasswordHash(request.getPasswordHash());
+        user.setRole(defaultIfBlank(normalizeRole(request.getRequestedRole()), DEFAULT_REQUESTED_ROLE));
+        user.setEnabled(true);
+        user.setCreatedAt(Instant.now());
+        user.setUpdatedAt(Instant.now());
+
+        userRepository.save(user);
+    }
+
+    private void updateUserFromApprovedRequest(User user, RoleRequest request) {
+        user.setFullName(defaultIfBlank(normalize(request.getFullName()), user.getFullName()));
+        user.setUsername(defaultIfBlank(normalize(request.getUsername()), user.getUsername()));
+        user.setEmail(defaultIfBlank(normalizeLower(request.getEmail()), user.getEmail()));
+        user.setDni(defaultIfBlank(normalizeUpper(request.getDni()), user.getDni()));
+        user.setPhone(defaultIfBlank(normalizePhone(request.getPhone()), user.getPhone()));
+        user.setRole(defaultIfBlank(normalizeRole(request.getRequestedRole()), user.getRole()));
     }
 
     private ObjectId toObjectId(String value) {
@@ -278,6 +373,11 @@ public class RoleRequestService {
     private String normalizeUpper(String value) {
         String cleanValue = normalize(value);
         return cleanValue == null ? null : cleanValue.toUpperCase();
+    }
+
+    private String normalizePhone(String value) {
+        String cleanValue = normalize(value);
+        return cleanValue == null ? null : cleanValue.replace(" ", "");
     }
 
     private String normalizeRole(String role) {
@@ -303,5 +403,9 @@ public class RoleRequestService {
 
     private boolean isValidDniFormat(String dni) {
         return dni != null && dni.matches("^\\d{8}[A-Z]$");
+    }
+
+    private boolean containsIgnoreCase(String value, String search) {
+        return value != null && value.toLowerCase().contains(search);
     }
 }

@@ -1,6 +1,7 @@
 package es.unex.cume.gestodered.data.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
@@ -11,10 +12,14 @@ public class User {
     @Id
     private String id;
 
+    @Indexed(name = "username_1", unique = true)
     private String username;
     private String fullName;
+    @Indexed(name = "email_1", unique = true)
     private String email;
+    @Indexed(name = "dni_1", unique = true)
     private String dni;
+    @Indexed(name = "phone_1", unique = true)
     private String phone;
     private String passwordHash;
     private String role;

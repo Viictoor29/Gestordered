@@ -2,26 +2,51 @@ package es.unex.cume.gestodered.data.model;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 
 @Document(collection = "role_requests")
+@CompoundIndexes({
+        @CompoundIndex(
+                name = "dni_1_status_1",
+                def = "{ 'dni': 1, 'status': 1 }",
+                unique = true,
+                partialFilter = "{ 'status': 'PENDING' }"),
+        @CompoundIndex(
+                name = "email_1_status_1",
+                def = "{ 'email': 1, 'status': 1 }",
+                unique = true,
+                partialFilter = "{ 'status': 'PENDING' }"),
+        @CompoundIndex(
+                name = "username_1_status_1",
+                def = "{ 'username': 1, 'status': 1 }",
+                unique = true,
+                partialFilter = "{ 'status': 'PENDING' }")
+})
 public class RoleRequest {
 
     @Id
     private String id;
 
+    @Indexed(name = "userId_1")
     private ObjectId userId;
     private String username;
     private String fullName;
+    @Indexed(name = "email_1")
     private String email;
+    @Indexed(name = "dni_1")
     private String dni;
     private String phone;
     private String passwordHash;
     private String currentRole;
     private String requestedRole;
     private String reason;
+    private String rejectionReason;
+    @Indexed(name = "status_1")
     private String status;
     private ObjectId reviewedBy;
     private Instant createdAt;
@@ -72,6 +97,10 @@ public class RoleRequest {
 
     public String getReason() {
         return reason;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
     }
 
     public String getStatus() {
@@ -132,6 +161,10 @@ public class RoleRequest {
 
     public void setReason(String reason) {
         this.reason = reason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
     }
 
     public void setStatus(String status) {

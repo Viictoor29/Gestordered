@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Red - Dashboard</title>
+    <title th:text="'Gestor de Red - ' + ${roleLabel}">Gestor de Red - Panel</title>
+    <link rel="icon" type="image/png" href="/img/logo.png?v=20260526">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/dashboard.css?v=20260523-split-css">
+    <script src="/js/guest-dashboard.js?v=20260526-admin-topology" defer></script>
 </head>
 <body class="dashboard-page">
     <div class="dashboard-shell">
@@ -16,20 +18,42 @@
                 <span>Gestor de Red</span>
             </a>
 
-            <div class="dashboard-user-card">
+            <a href="/dashboard/profile"
+               class="dashboard-user-card"
+               th:classappend="${activeSection == 'profile'} ? ' active' : ''"
+               aria-label="Ver mi perfil">
                 <div class="dashboard-avatar" th:text="${avatarInitial}">U</div>
                 <div>
                     <strong th:text="${displayName}">Usuario</strong>
                     <span th:text="${roleLabel}">Operador</span>
                 </div>
-            </div>
+            </a>
 
             <nav class="dashboard-nav" aria-label="Menu principal">
-                <a href="#overview" class="active"><i class="fas fa-chart-line"></i><span>Resumen</span></a>
-                <a href="#profile"><i class="fas fa-user-gear"></i><span>Mi perfil</span></a>
-                <a href="#network"><i class="fas fa-diagram-project"></i><span>Topologia</span></a>
-                <a href="#requests"><i class="fas fa-id-card"></i><span>Permisos</span></a>
-                <a href="#admin" th:if="${isAdmin}"><i class="fas fa-shield-halved"></i><span>Administracion</span></a>
+                <a href="/dashboard"
+                   th:classappend="${activeSection == 'network'} ? ' active' : ''">
+                    <i class="fas fa-diagram-project"></i><span>Topología</span>
+                </a>
+                <a href="/dashboard/requests"
+                   th:unless="${isAdmin}"
+                   data-action="open-operator-request">
+                    <i class="fas fa-paper-plane"></i><span>Solicitar permisos</span>
+                </a>
+                <a href="/dashboard/requests"
+                   th:unless="${isAdmin}"
+                   data-action="open-operator-status">
+                    <i class="fas fa-list-check"></i><span>Ver peticiones</span>
+                </a>
+                <a href="/dashboard/admin"
+                   th:if="${isAdmin}"
+                   th:classappend="${activeSection == 'admin'} ? ' active' : ''">
+                    <i class="fas fa-list-check"></i><span>Peticiones</span>
+                </a>
+                <a href="/dashboard/operators"
+                   th:if="${isAdmin}"
+                   th:classappend="${activeSection == 'operators'} ? ' active' : ''">
+                    <i class="fas fa-user-gear"></i><span>Operadores</span>
+                </a>
             </nav>
 
             <form action="/logout" method="POST" class="dashboard-logout">
@@ -40,156 +64,591 @@
         <main class="dashboard-main">
             <header class="dashboard-topbar">
                 <div>
-                    <p>Panel de control</p>
-                    <h1 th:text="'Hola, ' + ${displayName}">Hola, usuario</h1>
+                    <p th:text="${dashboardSubtitle}">Panel de control</p>
+                    <h1 th:text="${dashboardTitle}">Panel</h1>
                 </div>
                 <span class="role-badge" th:text="${roleLabel}">Operador</span>
             </header>
 
-            <section id="overview" class="dashboard-grid dashboard-grid-stats">
-                <article class="dashboard-card stat-card">
-                    <span><i class="fas fa-server"></i></span>
-                    <div>
-                        <strong>Topologias</strong>
-                        <p>Pendiente de conectar con la API</p>
+            <section id="network" class="dashboard-content-grid" th:if="${activeSection == 'network'}">
+                <article class="dashboard-card panel-card topology-view-card">
+                    <div class="panel-header">
+                        <div>
+                            <p th:text="${topologySubtitle}">Vista operativa</p>
+                            <h2 th:text="${topologyTitle}">Topología de red</h2>
+                        </div>
+                        <span class="server-status" data-server-status>
+                            <i class="fas fa-circle"></i>
+                            Sin conectar
+                        </span>
                     </div>
-                </article>
 
-                <article class="dashboard-card stat-card">
-                    <span><i class="fas fa-route"></i></span>
-                    <div>
-                        <strong>Simulaciones</strong>
-                        <p>Preparado para Mininet</p>
-                    </div>
-                </article>
+                    <form class="server-form dashboard-server-form" data-server-form>
+                        <label>
+                            IP del servidor
+                            <input type="text" name="serverIp" placeholder="Ej. 192.168.56.104:8080" autocomplete="off" data-server-input>
+                        </label>
+                        <button type="submit" class="btn-panel" data-server-connect>
+                            <i class="fas fa-plug"></i>
+                            Conectar
+                        </button>
+                    </form>
 
-                <article class="dashboard-card stat-card">
-                    <span><i class="fas fa-user-check"></i></span>
-                    <div>
-                        <strong>Estado</strong>
-                        <p th:text="${user.enabled} ? 'Cuenta activa' : 'Cuenta desactivada'">Cuenta activa</p>
+                    <div class="topology-stage dashboard-topology-stage" data-topology-stage>
+                        <div class="empty-state" data-topology-empty>
+                            <i class="fas fa-network-wired"></i>
+                            <h3>Sin datos cargados todavia</h3>
+                            <p>Introduce el servidor de la API y pulsa conectar para ver la topología.</p>
+                        </div>
                     </div>
                 </article>
             </section>
 
-            <section class="dashboard-content-grid">
-                <article id="profile" class="dashboard-card panel-card">
+            <section id="profile" class="dashboard-content-grid" th:if="${activeSection == 'profile'}">
+                <article class="dashboard-card panel-card profile-card">
                     <div class="panel-header">
                         <div>
                             <p>Datos personales</p>
                             <h2>Mi perfil</h2>
                         </div>
-                        <button type="button" class="btn-panel" data-api-placeholder="/api/users/me">
+                        <button type="submit" form="profile-form" class="btn-panel">
                             <i class="fas fa-floppy-disk"></i>
                             Guardar
                         </button>
                     </div>
 
-                    <form class="profile-form">
-                        <label>
-                            Nombre completo
-                            <input type="text" th:value="${user.fullName}" placeholder="Tu nombre completo">
-                        </label>
-                        <label>
-                            Usuario
-                            <input type="text" th:value="${user.username}" readonly>
-                        </label>
-                        <label>
-                            Email
-                            <input type="email" th:value="${user.email}" placeholder="correo@ejemplo.com">
-                        </label>
-                        <label>
-                            DNI
-                            <input type="text" th:value="${user.dni}" placeholder="00000000A">
-                        </label>
-                        <label>
-                            Telefono
-                            <input type="tel" th:value="${user.phone}" placeholder="+34 600 000 000">
-                        </label>
-                        <label>
-                            Rol actual
-                            <input type="text" th:value="${roleLabel}" readonly>
-                        </label>
+                    <p class="account-request-feedback is-success" th:if="${profileSuccess}" th:text="${profileSuccess}"></p>
+                    <p class="account-request-feedback is-error" th:if="${profileError}" th:text="${profileError}"></p>
+
+                    <form id="profile-form" class="profile-form" method="post" action="/dashboard/profile">
+                        <div class="profile-form-section">
+                            <label>
+                                Nombre completo
+                                <input type="text" name="fullName" th:value="${user.fullName}" placeholder="Tu nombre completo" minlength="3" maxlength="120" required>
+                            </label>
+                            <label>
+                                Usuario
+                                <input type="text" name="username" th:value="${user.username}" minlength="3" maxlength="30" pattern="[A-Za-z0-9._-]{3,30}" title="Solo letras, numeros, punto, guion o guion bajo" required>
+                            </label>
+                            <label>
+                                Email
+                                <input type="email" name="email" th:value="${user.email}" placeholder="correo@ejemplo.com" required>
+                            </label>
+                            <label>
+                                DNI
+                                <input type="text" name="dni" th:value="${user.dni}" placeholder="00000000A" pattern="[0-9]{8}[A-Za-z]" maxlength="9" title="Introduce un DNI valido, por ejemplo 00000000T" required>
+                            </label>
+                            <label>
+                                Telefono
+                                <input type="tel" name="phone" th:value="${user.phone}" placeholder="+34600000000" pattern="\+?[0-9 ]{9,20}" title="Entre 9 y 20 numeros, con prefijo + opcional" required>
+                            </label>
+                            <label>
+                                Rol actual
+                                <input type="text" th:value="${roleLabel}" readonly>
+                            </label>
+                        </div>
+
+                        <div class="profile-password-section">
+                            <div class="profile-section-heading">
+                                <span><i class="fas fa-key"></i></span>
+                                <div>
+                                    <p>Seguridad</p>
+                                    <h3>Cambio de contraseña</h3>
+                                </div>
+                            </div>
+                            <div class="profile-form-section">
+                                <label>
+                                    Contraseña actual
+                                    <span class="profile-password-field">
+                                        <input type="password" name="currentPassword" autocomplete="current-password">
+                                        <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </span>
+                                </label>
+                                <label>
+                                    Nueva contraseña
+                                    <span class="profile-password-field">
+                                        <input type="password" name="newPassword" minlength="8" autocomplete="new-password">
+                                        <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </span>
+                                </label>
+                                <label>
+                                    Repite la nueva contraseña
+                                    <span class="profile-password-field">
+                                        <input type="password" name="confirmPassword" minlength="8" autocomplete="new-password">
+                                        <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
                     </form>
                 </article>
+            </section>
 
-                <article id="network" class="dashboard-card panel-card">
+            <section id="requests" class="dashboard-content-grid" th:if="${activeSection == 'requests'}">
+                <article class="dashboard-card panel-card">
                     <div class="panel-header">
                         <div>
-                            <p>Gestion de red</p>
-                            <h2>Topologias</h2>
+                            <p>Permisos</p>
+                            <h2>Solicitud de administrador</h2>
                         </div>
-                        <button type="button" class="btn-panel" data-api-placeholder="/api/topologies">
-                            <i class="fas fa-plus"></i>
-                            Nueva
-                        </button>
                     </div>
 
-                    <div class="empty-state">
-                        <i class="fas fa-diagram-project"></i>
-                        <h3>No hay topologias cargadas</h3>
-                        <p>Cuando conectes la API, aqui apareceran las topologias disponibles para consultar, editar o lanzar en Mininet.</p>
+                    <p class="account-request-feedback is-success" th:if="${operatorRequestSuccess}" th:text="${operatorRequestSuccess}"></p>
+                    <p class="account-request-feedback is-error" th:if="${operatorRequestError}" th:text="${operatorRequestError}"></p>
+
+                    <div class="empty-state compact-empty-state">
+                        <i class="fas fa-id-card"></i>
+                        <h3>Gestion de permisos</h3>
+                        <p>Usa el menu lateral para solicitar permisos o consultar tus peticiones.</p>
                     </div>
                 </article>
             </section>
 
-            <section class="dashboard-content-grid">
-                <article id="requests" class="dashboard-card panel-card">
+            <th:block th:unless="${isAdmin}">
+                <div class="account-request-modal" id="operator-request-modal" aria-hidden="true">
+                    <div class="account-request-backdrop" data-action="close-operator-request"></div>
+                    <section class="account-request-dialog" role="dialog" aria-modal="true" aria-labelledby="operator-request-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Nueva solicitud</p>
+                                <h2 id="operator-request-title">Solicitar permisos</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-operator-request" aria-label="Cerrar solicitud">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <form class="operator-request-form" method="post" action="/dashboard/role-requests">
+                            <label>
+                                Motivo
+                                <textarea name="reason" rows="5" placeholder="Explica brevemente por que necesitas permisos de administrador"></textarea>
+                            </label>
+                            <div class="modal-actions">
+                                <button type="button" class="btn-panel btn-panel-secondary" data-action="close-operator-request">Cancelar</button>
+                                <button type="submit" class="btn-panel">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Enviar solicitud
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+
+                <div class="account-request-modal" id="operator-status-modal" aria-hidden="true">
+                    <div class="account-request-backdrop" data-action="close-operator-status"></div>
+                    <section class="account-request-dialog" role="dialog" aria-modal="true" aria-labelledby="operator-status-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Seguimiento</p>
+                                <h2 id="operator-status-title">Mis peticiones</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-operator-status" aria-label="Cerrar peticiones">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div class="role-request-list" th:if="${!#lists.isEmpty(userRoleRequests)}">
+                            <article class="role-request-item" th:each="request : ${userRoleRequests}">
+                                <div class="role-request-header">
+                                    <div>
+                                        <p th:text="${(request.currentRole ?: 'OPERATOR') + ' -> ' + (request.requestedRole ?: 'ADMIN')}">OPERATOR -> ADMIN</p>
+                                        <h3 th:text="${request.status == 'APPROVED'} ? 'Aprobada' : (${request.status == 'REJECTED'} ? 'Rechazada' : 'Pendiente')">Pendiente</h3>
+                                    </div>
+                                    <span class="detail-badge"
+                                          th:classappend="${request.status == 'APPROVED'} ? ' is-success' : (${request.status == 'REJECTED'} ? ' is-danger' : ' is-warning')"
+                                          th:text="${request.status == 'APPROVED'} ? 'Aprobada' : (${request.status == 'REJECTED'} ? 'Rechazada' : 'Pendiente')">Pendiente</span>
+                                </div>
+
+                                <dl class="role-request-data operator-request-data">
+                                    <div><dt>Creada</dt><dd th:text="${request.createdAt != null ? #dates.format(T(java.util.Date).from(request.createdAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
+                                    <div><dt>Revisada</dt><dd th:text="${request.reviewedAt != null ? #dates.format(T(java.util.Date).from(request.reviewedAt), 'dd/MM/yyyy HH:mm') : 'Pendiente'}">pendiente</dd></div>
+                                </dl>
+
+                            <div class="role-request-reason">
+                                <strong>Motivo</strong>
+                                <p th:text="${#strings.isEmpty(request.reason)} ? 'Sin motivo indicado.' : ${request.reason}">Motivo</p>
+                            </div>
+
+                            <div class="role-request-reason is-rejection" th:if="${request.status == 'REJECTED'}">
+                                <strong>Justificación del rechazo</strong>
+                                <p th:text="${#strings.isEmpty(request.rejectionReason)} ? 'Sin justificación registrada.' : ${request.rejectionReason}">Justificacion</p>
+                            </div>
+                        </article>
+                    </div>
+
+                        <div class="empty-state compact-empty-state" th:if="${#lists.isEmpty(userRoleRequests)}">
+                            <i class="fas fa-list-check"></i>
+                            <h3>No has enviado solicitudes</h3>
+                            <p>Cuando envies una solicitud, podras consultar su estado aqui.</p>
+                        </div>
+                    </section>
+                </div>
+            </th:block>
+
+            <section id="admin" class="dashboard-content-grid" th:if="${activeSection == 'admin'}">
+                <article class="dashboard-card panel-card admin-panel role-requests-panel">
                     <div class="panel-header">
                         <div>
-                            <p>Permisos</p>
-                            <h2>Solicitud de rol</h2>
+                            <h2 id="requests-admin">Peticiones de acceso</h2>
                         </div>
-                        <button type="button" class="btn-panel btn-panel-secondary" data-api-placeholder="/api/role-requests">
-                            <i class="fas fa-paper-plane"></i>
-                            Solicitar
+                        <span class="role-badge" th:text="${pendingRoleRequests} + ' pendientes'">0 pendientes</span>
+                    </div>
+
+                    <p class="account-request-feedback is-success" th:if="${adminRequestSuccess}" th:text="${adminRequestSuccess}"></p>
+                    <p class="account-request-feedback is-error" th:if="${adminRequestError}" th:text="${adminRequestError}"></p>
+
+                    <form class="role-request-filters" method="get" action="/dashboard/admin">
+                        <label>
+                            Estado
+                            <select name="requestStatus">
+                                <option value="" th:selected="${requestStatus == ''}">Todos</option>
+                                <option value="PENDING" th:selected="${requestStatus == 'PENDING'}">Pendientes</option>
+                                <option value="APPROVED" th:selected="${requestStatus == 'APPROVED'}">Aprobadas</option>
+                                <option value="REJECTED" th:selected="${requestStatus == 'REJECTED'}">Rechazadas</option>
+                            </select>
+                        </label>
+                        <label>
+                            Rol solicitado
+                            <select name="requestedRole">
+                                <option value="" th:selected="${requestedRole == ''}">Todos</option>
+                                <option value="OPERATOR" th:selected="${requestedRole == 'OPERATOR'}">Operador</option>
+                                <option value="ADMIN" th:selected="${requestedRole == 'ADMIN'}">Administrador</option>
+                            </select>
+                        </label>
+                        <label>
+                            Rol actual
+                            <select name="currentRole">
+                                <option value="" th:selected="${currentRole == ''}">Todos</option>
+                                <option value="GUEST" th:selected="${currentRole == 'GUEST'}">Invitado</option>
+                                <option value="OPERATOR" th:selected="${currentRole == 'OPERATOR'}">Operador</option>
+                            </select>
+                        </label>
+                        <label>
+                            Buscar
+                            <input type="search" name="requestSearch" placeholder="Nombre, usuario, email, DNI..." th:value="${requestSearch}">
+                        </label>
+                        <button type="submit" class="btn-panel">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
                         </button>
+                    </form>
+
+                    <div class="request-admin-summary">
+                        <span><strong th:text="${visibleRoleRequests}">0</strong> visibles</span>
+                        <span><strong th:text="${pendingRoleRequests}">0</strong> pendientes totales</span>
                     </div>
 
-                    <div class="request-box">
-                        <p th:if="${isAdmin}">Tu cuenta tiene permisos de administracion. Desde el panel admin podras revisar solicitudes y gestionar usuarios.</p>
-                        <p th:unless="${isAdmin}">Tu cuenta tiene permisos de operador. Puedes solicitar permisos superiores cuando este flujo este conectado a la API.</p>
+                    <div class="role-request-list" th:if="${!#lists.isEmpty(roleRequests)}">
+                        <article class="role-request-item" th:each="request : ${roleRequests}">
+                            <div class="role-request-header">
+                                <div>
+                                    <p th:text="${(request.currentRole ?: 'GUEST') + ' -> ' + (request.requestedRole ?: 'OPERATOR')}">GUEST -> OPERATOR</p>
+                                    <h3 th:text="${request.fullName ?: request.username}">Nombre completo</h3>
+                                </div>
+                                <span class="detail-badge"
+                                      th:classappend="${request.status == 'APPROVED'} ? ' is-success' : (${request.status == 'REJECTED'} ? ' is-danger' : ' is-warning')"
+                                      th:text="${request.status == 'APPROVED'} ? 'Aprobada' : (${request.status == 'REJECTED'} ? 'Rechazada' : 'Pendiente')">Pendiente</span>
+                            </div>
+
+                            <dl class="role-request-data">
+                                <div><dt>Usuario</dt><dd th:text="${request.username ?: 'Sin indicar'}">usuario</dd></div>
+                                <div><dt>Email</dt><dd th:text="${request.email ?: 'Sin indicar'}">email</dd></div>
+                                <div><dt>DNI</dt><dd th:text="${request.dni ?: 'Sin indicar'}">dni</dd></div>
+                                <div><dt>Telefono</dt><dd th:text="${request.phone ?: 'Sin indicar'}">telefono</dd></div>
+                                <div><dt>Rol actual</dt><dd th:text="${request.currentRole ?: 'GUEST'}">GUEST</dd></div>
+                                <div><dt>Rol solicitado</dt><dd th:text="${request.requestedRole ?: 'OPERATOR'}">OPERATOR</dd></div>
+                                <div><dt>Creada</dt><dd th:text="${request.createdAt != null ? #dates.format(T(java.util.Date).from(request.createdAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
+                                <div><dt>Revisada</dt><dd th:text="${request.reviewedAt != null ? #dates.format(T(java.util.Date).from(request.reviewedAt), 'dd/MM/yyyy HH:mm') : 'Pendiente'}">pendiente</dd></div>
+                            </dl>
+
+                            <div class="role-request-reason">
+                                <strong>Motivo</strong>
+                                <p th:text="${#strings.isEmpty(request.reason)} ? 'Sin motivo indicado.' : ${request.reason}">Motivo</p>
+                            </div>
+
+                            <div class="role-request-reason is-rejection" th:if="${request.status == 'REJECTED'}">
+                                <strong>Justificación del rechazo</strong>
+                                <p th:text="${#strings.isEmpty(request.rejectionReason)} ? 'Sin justificación registrada.' : ${request.rejectionReason}">Justificacion</p>
+                            </div>
+
+                            <div class="role-request-actions" th:if="${request.status == 'PENDING'}">
+                                <form th:action="@{/admin/role-requests/{id}/approve(id=${request.id})}" method="post">
+                                    <button type="submit" class="btn-panel">
+                                        <i class="fas fa-check"></i>
+                                        Aceptar
+                                    </button>
+                                </form>
+                                <button type="button"
+                                        class="btn-panel btn-panel-danger"
+                                        data-action="open-admin-reject"
+                                        th:data-reject-action="@{/admin/role-requests/{id}/reject(id=${request.id})}"
+                                        th:data-request-name="${request.fullName ?: request.username}">
+                                    <i class="fas fa-xmark"></i>
+                                    Rechazar
+                                </button>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="empty-state compact-empty-state" th:if="${#lists.isEmpty(roleRequests)}">
+                        <i class="fas fa-list-check"></i>
+                        <h3>No hay solicitudes con esos filtros</h3>
+                        <p>Cambia el estado, el rol o la busqueda para ver otras peticiones.</p>
                     </div>
                 </article>
 
-                <article id="admin" class="dashboard-card panel-card admin-panel" th:if="${isAdmin}">
+                <div class="account-request-modal" id="admin-reject-modal" aria-hidden="true">
+                    <div class="account-request-backdrop" data-action="close-admin-reject"></div>
+                    <section class="account-request-dialog request-status-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-reject-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Revisión de solicitud</p>
+                                <h2 id="admin-reject-title">Justificar rechazo</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-admin-reject" aria-label="Cerrar rechazo">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <form class="operator-request-form" id="admin-reject-form" method="post">
+                            <p class="reject-modal-target" id="admin-reject-target">Solicitud seleccionada</p>
+                            <label>
+                                Justificación
+                                <textarea name="rejectionReason" rows="5" maxlength="500" placeholder="Indica por qué se rechaza la petición" required></textarea>
+                            </label>
+                            <div class="modal-actions">
+                                <button type="button" class="btn-panel btn-panel-secondary" data-action="close-admin-reject">Cancelar</button>
+                                <button type="submit" class="btn-panel btn-panel-danger">
+                                    <i class="fas fa-xmark"></i>
+                                    Rechazar
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            </section>
+
+            <section id="operators" class="dashboard-content-grid" th:if="${activeSection == 'operators'}">
+                <article class="dashboard-card panel-card operators-panel">
                     <div class="panel-header">
                         <div>
-                            <p>Solo administradores</p>
-                            <h2>Administracion</h2>
+                            <p>Administracion</p>
+                            <h2>Operadores</h2>
                         </div>
+                        <span class="role-badge" th:text="${#lists.size(operators)} + ' registrados'">0 registrados</span>
                     </div>
 
-                    <div class="admin-actions">
-                        <button type="button" data-api-placeholder="/api/admin/users"><i class="fas fa-users"></i> Usuarios</button>
-                        <button type="button" data-api-placeholder="/api/admin/role-requests"><i class="fas fa-list-check"></i> Solicitudes</button>
-                        <button type="button" data-api-placeholder="/api/admin/audit"><i class="fas fa-clock-rotate-left"></i> Auditoria</button>
+                    <p class="account-request-feedback is-success" th:if="${operatorSuccess}" th:text="${operatorSuccess}"></p>
+                    <p class="account-request-feedback is-error" th:if="${operatorError}" th:text="${operatorError}"></p>
+
+                    <div class="operators-layout">
+                        <section class="operator-create-section">
+                            <div class="profile-section-heading">
+                                <span><i class="fas fa-user-plus"></i></span>
+                                <div>
+                                    <p>Nuevo acceso</p>
+                                    <h3>Crear operador</h3>
+                                </div>
+                            </div>
+
+                            <form class="operator-form" method="post" action="/dashboard/operators">
+                                <label>
+                                    Nombre completo
+                                    <input type="text" name="fullName" placeholder="Nombre y apellidos" minlength="3" maxlength="120" required>
+                                </label>
+                                <label>
+                                    Usuario
+                                    <input type="text" name="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9._-]{3,30}" title="Solo letras, numeros, punto, guion o guion bajo" required>
+                                </label>
+                                <label>
+                                    Email
+                                    <input type="email" name="email" placeholder="correo@ejemplo.com" required>
+                                </label>
+                                <label>
+                                    DNI
+                                    <input type="text" name="dni" placeholder="00000000A" pattern="[0-9]{8}[A-Za-z]" maxlength="9" title="Introduce un DNI valido, por ejemplo 00000000T" required>
+                                </label>
+                                <label>
+                                    Telefono
+                                    <input type="tel" name="phone" placeholder="+34600000000" pattern="\+?[0-9 ]{9,20}" title="Entre 9 y 20 numeros, con prefijo + opcional" required>
+                                </label>
+                                <label>
+                                    Contraseña
+                                    <span class="profile-password-field">
+                                        <input type="password" name="password" minlength="8" autocomplete="new-password" required>
+                                        <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </span>
+                                </label>
+                                <label>
+                                    Repite la contraseña
+                                    <span class="profile-password-field">
+                                        <input type="password" name="confirmPassword" minlength="8" autocomplete="new-password" required>
+                                        <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </span>
+                                </label>
+                                <button type="submit" class="btn-panel">
+                                    <i class="fas fa-plus"></i>
+                                    Crear operador
+                                </button>
+                            </form>
+                        </section>
+
+                        <section class="operator-list-section">
+                            <div class="profile-section-heading">
+                                <span><i class="fas fa-user-gear"></i></span>
+                                <div>
+                                    <p>Usuarios</p>
+                                    <h3>Operadores registrados</h3>
+                                </div>
+                            </div>
+
+                            <div class="operator-list" th:if="${!#lists.isEmpty(operators)}">
+                                <article class="operator-item" th:each="operator : ${operators}"
+                                         th:classappend="${selectedOperator != null && selectedOperator.id == operator.id} ? ' is-selected' : ''">
+                                    <div class="operator-main">
+                                        <div class="dashboard-avatar"><i class="fas fa-user"></i></div>
+                                        <div>
+                                            <h3 th:text="${operator.fullName ?: operator.username}">Operador</h3>
+                                            <p>
+                                                <span th:text="${operator.username}">usuario</span>
+                                                <span> · </span>
+                                                <strong>Operador</strong>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="operator-actions">
+                                        <a class="btn-panel btn-panel-secondary" th:href="@{/dashboard/operators(operatorId=${operator.id})}">
+                                            <i class="fas fa-eye"></i>
+                                            Ver
+                                        </a>
+                                        <form th:action="@{/dashboard/operators/{id}/delete(id=${operator.id})}" method="post">
+                                            <button type="submit" class="btn-panel btn-panel-danger">
+                                                <i class="fas fa-trash"></i>
+                                                Borrar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </article>
+                            </div>
+
+                            <div class="empty-state compact-empty-state" th:if="${#lists.isEmpty(operators)}">
+                                <i class="fas fa-user-gear"></i>
+                                <h3>No hay operadores registrados</h3>
+                                <p>Crea el primer operador desde el formulario.</p>
+                            </div>
+                        </section>
                     </div>
                 </article>
 
-                <article class="dashboard-card panel-card operator-panel" th:unless="${isAdmin}">
-                    <div class="panel-header">
-                        <div>
-                            <p>Herramientas</p>
-                            <h2>Operador</h2>
+                <div class="operator-modal is-open" th:if="${selectedOperator != null}" role="dialog" aria-modal="true" aria-labelledby="operator-detail-title">
+                    <a class="operator-modal-backdrop" href="/dashboard/operators" aria-label="Cerrar detalle"></a>
+                    <article class="operator-modal-dialog">
+                        <div class="panel-header">
+                            <div>
+                                <p>Detalle</p>
+                                <h2 id="operator-detail-title" th:text="${selectedOperator.fullName ?: selectedOperator.username}">Operador</h2>
+                            </div>
+                            <a class="modal-close-button" href="/dashboard/operators" aria-label="Cerrar detalle">
+                                <i class="fas fa-xmark"></i>
+                            </a>
                         </div>
-                    </div>
 
-                    <div class="admin-actions">
-                        <button type="button" data-api-placeholder="/api/topologies/mine"><i class="fas fa-folder-open"></i> Mis topologias</button>
-                        <button type="button" data-api-placeholder="/api/simulations"><i class="fas fa-play"></i> Simulaciones</button>
-                        <button type="button" data-api-placeholder="/api/reports"><i class="fas fa-file-lines"></i> Informes</button>
-                    </div>
-                </article>
+                        <dl class="role-request-data operator-detail-data">
+                            <div><dt>Usuario</dt><dd th:text="${selectedOperator.username}">usuario</dd></div>
+                            <div><dt>Email</dt><dd th:text="${selectedOperator.email}">email</dd></div>
+                            <div><dt>DNI</dt><dd th:text="${selectedOperator.dni}">dni</dd></div>
+                            <div><dt>Telefono</dt><dd th:text="${selectedOperator.phone}">telefono</dd></div>
+                            <div><dt>Rol</dt><dd>Operador</dd></div>
+                            <div><dt>Creado</dt><dd th:text="${selectedOperator.createdAt != null ? #dates.format(T(java.util.Date).from(selectedOperator.createdAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
+                            <div><dt>Actualizado</dt><dd th:text="${selectedOperator.updatedAt != null ? #dates.format(T(java.util.Date).from(selectedOperator.updatedAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
+                        </dl>
+                    </article>
+                </div>
             </section>
         </main>
     </div>
 
     <script>
-        document.querySelectorAll('.dashboard-nav a[href^="#"]').forEach(link => {
-            link.addEventListener('click', function() {
-                document.querySelectorAll('.dashboard-nav a').forEach(item => item.classList.remove('active'));
-                this.classList.add('active');
+        const bindModal = (openAction, closeAction, modalId) => {
+            const modal = document.getElementById(modalId);
+            if (!modal) {
+                return;
+            }
+
+            document.querySelectorAll(`[data-action="${openAction}"]`).forEach(trigger => {
+                trigger.addEventListener('click', event => {
+                    event.preventDefault();
+                    if (trigger.disabled) {
+                        return;
+                    }
+                    modal.classList.add('is-open');
+                    modal.setAttribute('aria-hidden', 'false');
+                });
+            });
+
+            document.querySelectorAll(`[data-action="${closeAction}"]`).forEach(trigger => {
+                trigger.addEventListener('click', () => {
+                    modal.classList.remove('is-open');
+                    modal.setAttribute('aria-hidden', 'true');
+                });
+            });
+        };
+
+        bindModal('open-operator-request', 'close-operator-request', 'operator-request-modal');
+        bindModal('open-operator-status', 'close-operator-status', 'operator-status-modal');
+
+        const adminRejectModal = document.getElementById('admin-reject-modal');
+        const adminRejectForm = document.getElementById('admin-reject-form');
+        const adminRejectTarget = document.getElementById('admin-reject-target');
+
+        if (adminRejectModal && adminRejectForm) {
+            const rejectionTextarea = adminRejectForm.querySelector('textarea[name="rejectionReason"]');
+
+            const closeAdminRejectModal = () => {
+                adminRejectModal.classList.remove('is-open');
+                adminRejectModal.setAttribute('aria-hidden', 'true');
+                adminRejectForm.removeAttribute('action');
+                adminRejectForm.reset();
+            };
+
+            document.querySelectorAll('[data-action="open-admin-reject"]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.dataset.rejectAction;
+                    if (!action) {
+                        return;
+                    }
+
+                    adminRejectForm.action = action;
+                    adminRejectTarget.textContent = `Vas a rechazar la petición de ${button.dataset.requestName || 'este usuario'}.`;
+                    adminRejectModal.classList.add('is-open');
+                    adminRejectModal.setAttribute('aria-hidden', 'false');
+                    rejectionTextarea.focus();
+                });
+            });
+
+            document.querySelectorAll('[data-action="close-admin-reject"]').forEach(button => {
+                button.addEventListener('click', closeAdminRejectModal);
+            });
+        }
+
+        document.querySelectorAll('[data-action="toggle-profile-password"]').forEach(button => {
+            button.addEventListener('click', () => {
+                const input = button.closest('.profile-password-field').querySelector('input');
+                const isHidden = input.type === 'password';
+                input.type = isHidden ? 'text' : 'password';
+                button.setAttribute('aria-pressed', String(isHidden));
+                button.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                button.querySelector('i').className = isHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
             });
         });
     </script>

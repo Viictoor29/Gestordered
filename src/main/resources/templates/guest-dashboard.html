@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestor de Red - Invitado</title>
+    <link rel="icon" type="image/png" href="/img/logo.png?v=20260526">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/dashboard.css?v=20260523-split-css">
@@ -214,7 +215,7 @@
                 </label>
 
                 <p class="account-request-feedback" id="request-status-feedback" aria-live="polite"
-                   th:text="${statusSuccess != null ? 'Estado: ' + statusSuccess : statusError}"
+                   th:text="${statusSuccess ?: statusError}"
                    th:classappend="${statusError} ? ' is-error' : (${statusClass} ?: '')"></p>
 
                 <div class="modal-actions">
