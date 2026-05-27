@@ -4,6 +4,8 @@
     const button = document.querySelector('[data-server-connect]');
     const status = document.querySelector('[data-server-status]');
     const stage = document.querySelector('[data-topology-stage]');
+    const controllerStatusButton = document.querySelector('[data-controller-status-refresh]');
+    const controllerStatusBody = document.querySelector('[data-controller-status-body]');
     const refreshIntervalMs = 300000;
     let refreshTimer = null;
     let isLoadingTopology = false;
@@ -23,6 +25,10 @@
         event.preventDefault();
         loadTopology({ manual: true });
     });
+
+    if (controllerStatusButton && controllerStatusBody) {
+        controllerStatusButton.addEventListener('click', () => loadControllerStatus());
+    }
 
     bindRoleRequestForms();
 
@@ -196,6 +202,94 @@
                 <h3>${escapeHtml(title)}</h3>
                 <p>${escapeHtml(text)}</p>
             </div>
+        `;
+    }
+
+    async function loadControllerStatus() {
+        if (!controllerStatusButton || !controllerStatusBody) {
+            return;
+        }
+
+        const originalHtml = controllerStatusButton.innerHTML;
+        controllerStatusButton.disabled = true;
+        controllerStatusButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Consultando';
+        controllerStatusBody.innerHTML = renderStatusPlaceholder('loading', 'Consultando el controlador...');
+
+        try {
+            const response = await fetch(buildApiUrl('/api/controller/status'), {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin'
+            });
+            const payload = await response.json();
+
+            if (!response.ok || payload.ok === false) {
+                throw new Error(payload.error || `HTTP ${response.status}`);
+            }
+
+            renderControllerStatus(payload.data || payload);
+        } catch (error) {
+            controllerStatusBody.innerHTML = renderStatusPlaceholder(
+                'error',
+                'No se pudo consultar el estado del controlador SDN.'
+            );
+        } finally {
+            controllerStatusButton.disabled = false;
+            controllerStatusButton.innerHTML = originalHtml;
+        }
+    }
+
+    function buildApiUrl(path) {
+        const rawServer = input.value.trim();
+        if (!rawServer) {
+            return path;
+        }
+
+        return `${normalizeServer(rawServer)}${path}`;
+    }
+
+    function renderStatusPlaceholder(type, text) {
+        return `
+            <span class="network-status-placeholder is-${type}">
+                <i class="fas ${type === 'loading' ? 'fa-spinner fa-spin' : 'fa-triangle-exclamation'}"></i>
+                ${escapeHtml(text)}
+            </span>
+        `;
+    }
+
+    function renderControllerStatus(data) {
+        const controller = data.controller || {};
+        const summary = data.summary || {};
+        const statusText = formatState(controller.status) || 'No disponible';
+        const uptime = formatDuration(controller.uptime_seconds);
+        const ofpVersions = Array.isArray(controller.ofp_versions)
+            ? controller.ofp_versions.join(', ')
+            : controller.ofp_versions;
+
+        controllerStatusBody.innerHTML = `
+            <div class="network-status-summary">
+                ${renderStatusKpi('Estado', statusText, 'fa-heart-pulse', controller.status === 'running' ? 'is-success' : 'is-warning')}
+                ${renderStatusKpi('Uptime', uptime, 'fa-clock')}
+                ${renderStatusKpi('Switches', summary.switches_connected ?? 0, 'fa-network-wired')}
+                ${renderStatusKpi('Enlaces', summary.links_inventory ?? 0, 'fa-link')}
+            </div>
+            <dl class="network-status-details">
+                ${detailRow('Controlador', controller.name || 'Ryu SDN Controller')}
+                ${detailRow('Versiones OpenFlow', ofpVersions || 'No disponible')}
+                ${detailRow('Intervalo monitorizacion', formatSeconds(controller.monitor_interval_seconds))}
+                ${detailRow('Switches con estadisticas de puertos', summary.port_stats_switches)}
+                ${detailRow('Switches con estadisticas de flujos', summary.flow_stats_switches)}
+                ${detailRow('Puertos bloqueados por STP', summary.stp_blocked_ports)}
+            </dl>
+        `;
+    }
+
+    function renderStatusKpi(label, value, icon, extraClass = '') {
+        return `
+            <span class="network-status-kpi ${extraClass}">
+                <i class="fas ${icon}"></i>
+                <small>${escapeHtml(label)}</small>
+                <strong>${escapeHtml(value ?? 'N/D')}</strong>
+            </span>
         `;
     }
 
@@ -906,6 +1000,35 @@
             minute: '2-digit',
             second: '2-digit'
         });
+    }
+
+    function formatDuration(seconds) {
+        if (seconds === undefined || seconds === null || Number.isNaN(Number(seconds))) {
+            return 'No disponible';
+        }
+
+        const totalSeconds = Number(seconds);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+        if (days > 0) {
+            return `${days}d ${hours}h`;
+        }
+
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        }
+
+        return `${minutes}m`;
+    }
+
+    function formatSeconds(seconds) {
+        if (seconds === undefined || seconds === null || Number.isNaN(Number(seconds))) {
+            return undefined;
+        }
+
+        return `${seconds} s`;
     }
 
     function formatTcValue(value) {

@@ -50,6 +50,11 @@
                    th:classappend="${activeSection == 'admin'} ? ' active' : ''">
                     <i class="fas fa-list-check"></i><span>Peticiones</span>
                 </a>
+                <a href="/dashboard/topologies"
+                   th:if="${isAdmin}"
+                   th:classappend="${activeSection == 'topologies'} ? ' active' : ''">
+                    <i class="fas fa-database"></i><span>Topologias BD</span>
+                </a>
                 <a href="/dashboard/operators"
                    th:if="${isAdmin}"
                    th:classappend="${activeSection == 'operators'} ? ' active' : ''">
@@ -94,6 +99,25 @@
                             Conectar
                         </button>
                     </form>
+
+                    <div class="network-status-panel" data-controller-status-panel>
+                        <div class="network-status-heading">
+                            <div>
+                                <p>Controlador SDN</p>
+                                <h3>Estado del controlador</h3>
+                            </div>
+                            <button type="button" class="topology-refresh-button" data-controller-status-refresh>
+                                <i class="fas fa-arrows-rotate"></i>
+                                Consultar estado
+                            </button>
+                        </div>
+                        <div class="network-status-body" data-controller-status-body>
+                            <span class="network-status-placeholder">
+                                <i class="fas fa-circle-info"></i>
+                                Pulsa consultar estado para leer la API de Ryu.
+                            </span>
+                        </div>
+                    </div>
 
                     <div class="topology-stage dashboard-topology-stage" data-topology-stage>
                         <div class="empty-state" data-topology-empty>
@@ -449,6 +473,172 @@
                 </div>
             </section>
 
+            <section id="topologies" class="dashboard-content-grid" th:if="${activeSection == 'topologies'}">
+                <article class="dashboard-card panel-card topologies-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p>Base de datos</p>
+                            <h2>Topologias guardadas</h2>
+                        </div>
+                        <span class="role-badge" th:text="${#lists.size(topologies)} + ' guardadas'">0 guardadas</span>
+                    </div>
+
+                    <p class="account-request-feedback is-success" th:if="${topologySuccess}" th:text="${topologySuccess}"></p>
+                    <p class="account-request-feedback is-error" th:if="${topologyError}" th:text="${topologyError}"></p>
+
+                    <div class="topologies-layout">
+                        <section class="topology-upload-section">
+                            <div class="profile-section-heading">
+                                <span><i class="fas fa-upload"></i></span>
+                                <div>
+                                    <p>Importar</p>
+                                    <h3>Subir JSON</h3>
+                                </div>
+                            </div>
+
+                            <form class="operator-form topology-upload-form" method="post" action="/dashboard/topologies/upload" enctype="multipart/form-data">
+                                <label class="topology-field">
+                                    Nombre
+                                    <input type="text" name="name" placeholder="Nombre de la topologia" minlength="3" maxlength="80">
+                                </label>
+                                <label class="topology-field">
+                                    Descripcion
+                                    <input type="text" name="description" placeholder="Descripcion breve" maxlength="240">
+                                </label>
+                                <div class="topology-file-field">
+                                    <span>Archivo JSON</span>
+                                    <label class="topology-file-drop">
+                                        <input type="file" name="file" accept="application/json,.json" required data-topology-file-input>
+                                        <i class="fas fa-file-arrow-up"></i>
+                                        <strong data-topology-file-name>Seleccionar JSON</strong>
+                                        <small>El nombre y la descripcion se pueden leer del archivo si los dejas vacios.</small>
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn-panel">
+                                    <i class="fas fa-upload"></i>
+                                    Subir topologia
+                                </button>
+                            </form>
+                        </section>
+
+                        <section class="topology-list-section">
+                            <div class="profile-section-heading">
+                                <span><i class="fas fa-database"></i></span>
+                                <div>
+                                    <p>Repositorio</p>
+                                    <h3>Topologias en MongoDB</h3>
+                                </div>
+                            </div>
+
+                            <div class="topology-db-list" th:if="${!#lists.isEmpty(topologies)}">
+                                <article class="topology-db-item" th:each="topology : ${topologies}">
+                                    <div class="topology-db-main">
+                                        <span class="detail-icon"><i class="fas fa-diagram-project"></i></span>
+                                        <div>
+                                            <h3 th:text="${topology.name}">Topologia</h3>
+                                            <p th:text="${#strings.isEmpty(topology.description)} ? 'Sin descripcion' : ${topology.description}">Descripcion</p>
+                                        </div>
+                                    </div>
+
+                                    <dl class="role-request-data topology-db-data">
+                                        <div><dt>Nodos</dt><dd th:text="${topology.nodes}">0</dd></div>
+                                        <div><dt>Enlaces</dt><dd th:text="${topology.edges}">0</dd></div>
+                                        <div><dt>Creada</dt><dd th:text="${topology.createdAt != null ? #dates.format(T(java.util.Date).from(topology.createdAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
+                                        <div><dt>Actualizada</dt><dd th:text="${topology.updatedAt != null ? #dates.format(T(java.util.Date).from(topology.updatedAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
+                                    </dl>
+
+                                    <div class="role-request-actions">
+                                        <button type="button"
+                                                class="btn-panel btn-panel-secondary"
+                                                data-action="open-topology-json"
+                                                th:data-topology-name="${topology.name}">
+                                            <i class="fas fa-eye"></i>
+                                            Ver JSON
+                                        </button>
+                                        <textarea class="topology-json-source" data-topology-json th:text="${topology.json}" hidden>{}</textarea>
+                                        <a class="btn-panel btn-panel-secondary" th:href="@{/dashboard/topologies/{id}/download(id=${topology.id})}">
+                                            <i class="fas fa-download"></i>
+                                            Descargar JSON
+                                        </a>
+                                        <button type="button"
+                                                class="btn-panel btn-panel-danger"
+                                                data-action="open-topology-delete"
+                                                th:data-delete-action="@{/dashboard/topologies/{id}/delete(id=${topology.id})}"
+                                                th:data-topology-name="${topology.name}">
+                                            <i class="fas fa-trash"></i>
+                                            Borrar
+                                        </button>
+                                    </div>
+                                </article>
+                            </div>
+
+                            <div class="empty-state compact-empty-state" th:if="${#lists.isEmpty(topologies)}">
+                                <i class="fas fa-database"></i>
+                                <h3>No hay topologias guardadas</h3>
+                                <p>Sube un archivo JSON para guardarlo en la base de datos.</p>
+                            </div>
+                        </section>
+                    </div>
+                </article>
+
+                <div class="account-request-modal" id="topology-json-modal" aria-hidden="true">
+                    <div class="account-request-backdrop" data-action="close-topology-json"></div>
+                    <section class="account-request-dialog topology-json-dialog" role="dialog" aria-modal="true" aria-labelledby="topology-json-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Contenido JSON</p>
+                                <h2 id="topology-json-title">Topologia</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-topology-json" aria-label="Cerrar JSON">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+                        <pre class="topology-json-modal-content" id="topology-json-content">{}</pre>
+                    </section>
+                </div>
+
+                <div class="account-request-modal"
+                     id="topology-delete-modal"
+                     th:classappend="${topologyDeleteError} ? ' is-open' : ''"
+                     th:attr="aria-hidden=${topologyDeleteError} ? 'false' : 'true'">
+                    <div class="account-request-backdrop" data-action="close-topology-delete"></div>
+                    <section class="account-request-dialog request-status-dialog" role="dialog" aria-modal="true" aria-labelledby="topology-delete-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Confirmacion requerida</p>
+                                <h2 id="topology-delete-title">Eliminar topologia</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-topology-delete" aria-label="Cerrar borrado">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <form class="operator-request-form" id="topology-delete-form" method="post" th:action="${topologyDeleteAction}">
+                            <p class="reject-modal-target"
+                               id="topology-delete-target"
+                               th:text="${topologyDeleteName != null ? 'Vas a eliminar la topologia ' + topologyDeleteName + '.' : 'Topologia seleccionada'}">Topologia seleccionada</p>
+                            <p class="account-request-feedback is-error" th:if="${topologyDeleteError}" th:text="${topologyDeleteError}"></p>
+                            <label>
+                                Contraseña del administrador
+                                <span class="profile-password-field">
+                                    <input type="password" name="adminPassword" autocomplete="current-password" required>
+                                    <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </span>
+                            </label>
+                            <div class="modal-actions">
+                                <button type="button" class="btn-panel btn-panel-secondary" data-action="close-topology-delete">Cancelar</button>
+                                <button type="submit" class="btn-panel btn-panel-danger">
+                                    <i class="fas fa-trash"></i>
+                                    Eliminar
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            </section>
+
             <section id="operators" class="dashboard-content-grid" th:if="${activeSection == 'operators'}">
                 <article class="dashboard-card panel-card operators-panel">
                     <div class="panel-header">
@@ -592,7 +782,10 @@
                     </article>
                 </div>
 
-                <div class="account-request-modal" id="operator-delete-modal" aria-hidden="true">
+                <div class="account-request-modal"
+                     id="operator-delete-modal"
+                     th:classappend="${operatorDeleteError} ? ' is-open' : ''"
+                     th:attr="aria-hidden=${operatorDeleteError} ? 'false' : 'true'">
                     <div class="account-request-backdrop" data-action="close-operator-delete"></div>
                     <section class="account-request-dialog request-status-dialog" role="dialog" aria-modal="true" aria-labelledby="operator-delete-title">
                         <div class="panel-header">
@@ -605,8 +798,11 @@
                             </button>
                         </div>
 
-                        <form class="operator-request-form" id="operator-delete-form" method="post">
-                            <p class="reject-modal-target" id="operator-delete-target">Operador seleccionado</p>
+                        <form class="operator-request-form" id="operator-delete-form" method="post" th:action="${operatorDeleteAction}">
+                            <p class="reject-modal-target"
+                               id="operator-delete-target"
+                               th:text="${operatorDeleteName != null ? 'Vas a eliminar a ' + operatorDeleteName + '.' : 'Operador seleccionado'}">Operador seleccionado</p>
+                            <p class="account-request-feedback is-error" th:if="${operatorDeleteError}" th:text="${operatorDeleteError}"></p>
                             <label>
                                 Contraseña del administrador
                                 <span class="profile-password-field">
@@ -660,6 +856,42 @@
         bindModal('open-operator-status', 'close-operator-status', 'operator-status-modal');
         bindModal('open-operator-pending', 'close-operator-pending', 'operator-pending-modal');
 
+        const formatJson = rawJson => {
+            try {
+                return JSON.stringify(JSON.parse(rawJson), null, 2);
+            } catch (error) {
+                return rawJson;
+            }
+        };
+
+        const topologyJsonModal = document.getElementById('topology-json-modal');
+        const topologyJsonTitle = document.getElementById('topology-json-title');
+        const topologyJsonContent = document.getElementById('topology-json-content');
+
+        if (topologyJsonModal && topologyJsonTitle && topologyJsonContent) {
+            const closeTopologyJsonModal = () => {
+                topologyJsonModal.classList.remove('is-open');
+                topologyJsonModal.setAttribute('aria-hidden', 'true');
+                topologyJsonContent.textContent = '{}';
+            };
+
+            document.querySelectorAll('[data-action="open-topology-json"]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const jsonSource = button.closest('.topology-db-item')?.querySelector('[data-topology-json]');
+                    const rawJson = jsonSource?.value || jsonSource?.textContent || '{}';
+
+                    topologyJsonTitle.textContent = button.dataset.topologyName || 'Topologia';
+                    topologyJsonContent.textContent = formatJson(rawJson);
+                    topologyJsonModal.classList.add('is-open');
+                    topologyJsonModal.setAttribute('aria-hidden', 'false');
+                });
+            });
+
+            document.querySelectorAll('[data-action="close-topology-json"]').forEach(button => {
+                button.addEventListener('click', closeTopologyJsonModal);
+            });
+        }
+
         document.querySelectorAll('[data-action="switch-pending-to-status"]').forEach(button => {
             button.addEventListener('click', () => {
                 const pendingModal = document.getElementById('operator-pending-modal');
@@ -711,6 +943,40 @@
             });
         }
 
+        const topologyDeleteModal = document.getElementById('topology-delete-modal');
+        const topologyDeleteForm = document.getElementById('topology-delete-form');
+        const topologyDeleteTarget = document.getElementById('topology-delete-target');
+
+        if (topologyDeleteModal && topologyDeleteForm) {
+            const passwordInput = topologyDeleteForm.querySelector('input[name="adminPassword"]');
+
+            const closeTopologyDeleteModal = () => {
+                topologyDeleteModal.classList.remove('is-open');
+                topologyDeleteModal.setAttribute('aria-hidden', 'true');
+                topologyDeleteForm.removeAttribute('action');
+                topologyDeleteForm.reset();
+            };
+
+            document.querySelectorAll('[data-action="open-topology-delete"]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.dataset.deleteAction;
+                    if (!action) {
+                        return;
+                    }
+
+                    topologyDeleteForm.action = action;
+                    topologyDeleteTarget.textContent = `Vas a eliminar la topologia ${button.dataset.topologyName || 'seleccionada'}.`;
+                    topologyDeleteModal.classList.add('is-open');
+                    topologyDeleteModal.setAttribute('aria-hidden', 'false');
+                    passwordInput.focus();
+                });
+            });
+
+            document.querySelectorAll('[data-action="close-topology-delete"]').forEach(button => {
+                button.addEventListener('click', closeTopologyDeleteModal);
+            });
+        }
+
         const operatorDeleteModal = document.getElementById('operator-delete-modal');
         const operatorDeleteForm = document.getElementById('operator-delete-form');
         const operatorDeleteTarget = document.getElementById('operator-delete-target');
@@ -753,6 +1019,58 @@
                 button.setAttribute('aria-pressed', String(isHidden));
                 button.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
                 button.querySelector('i').className = isHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+            });
+        });
+
+        document.querySelectorAll('[data-topology-file-input]').forEach(input => {
+            const dropZone = input.closest('.topology-file-drop');
+            const fileNameLabel = dropZone?.querySelector('[data-topology-file-name]');
+            const updateFileName = () => {
+                if (fileNameLabel) {
+                    fileNameLabel.textContent = input.files?.[0]?.name || 'Seleccionar JSON';
+                }
+            };
+
+            input.addEventListener('change', () => {
+                updateFileName();
+            });
+
+            if (!dropZone) {
+                return;
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, event => {
+                    event.preventDefault();
+                    dropZone.classList.add('is-dragging');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, event => {
+                    event.preventDefault();
+                    dropZone.classList.remove('is-dragging');
+                });
+            });
+
+            dropZone.addEventListener('drop', event => {
+                const file = event.dataTransfer?.files?.[0];
+                if (!file) {
+                    return;
+                }
+
+                const transfer = new DataTransfer();
+                transfer.items.add(file);
+                input.files = transfer.files;
+                updateFileName();
+            });
+        });
+
+        document.querySelectorAll('[data-confirm-delete]').forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!window.confirm(form.dataset.confirmDelete || 'Seguro que quieres borrar este elemento?')) {
+                    event.preventDefault();
+                }
             });
         });
     </script>

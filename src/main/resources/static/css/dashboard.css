@@ -386,19 +386,23 @@ button {
     font-weight: 900;
 }
 
-.operators-layout {
+.operators-layout,
+.topologies-layout {
     display: grid;
-    grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.15fr);
+    grid-template-columns: minmax(300px, 0.65fr) minmax(0, 1.35fr);
     gap: 20px;
     align-items: start;
 }
 
 .operator-create-section,
-.operator-list-section {
+.operator-list-section,
+.topology-upload-section,
+.topology-list-section {
     min-width: 0;
 }
 
-.operator-create-section {
+.operator-create-section,
+.topology-upload-section {
     border-right: 1px solid #dbe3ef;
     padding-right: 20px;
 }
@@ -427,6 +431,72 @@ button {
     font: inherit;
 }
 
+.topology-upload-form {
+    gap: 16px;
+}
+
+.topology-field input {
+    background: #ffffff;
+}
+
+.topology-file-field {
+    color: #1e293b;
+    display: grid;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.topology-file-drop {
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #172554;
+    min-height: 132px;
+    padding: 18px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    gap: 6px;
+}
+
+.topology-file-drop:hover {
+    border-color: #D4AF37;
+    background: #fffbeb;
+}
+
+.topology-file-drop.is-dragging {
+    border-color: #D4AF37;
+    background: #fffbeb;
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16);
+}
+
+.topology-file-drop input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.topology-file-drop i {
+    color: #D4AF37;
+    font-size: 1.8rem;
+}
+
+.topology-file-drop strong {
+    color: #172554;
+    font-size: 0.98rem;
+    overflow-wrap: anywhere;
+}
+
+.topology-file-drop small {
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 800;
+    line-height: 1.45;
+}
+
 .operator-list {
     display: grid;
     gap: 12px;
@@ -434,6 +504,101 @@ button {
     overflow-y: auto;
     padding-right: 8px;
     scrollbar-gutter: stable;
+}
+
+.topology-db-list {
+    display: grid;
+    gap: 14px;
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 8px;
+    scrollbar-gutter: stable;
+}
+
+.topology-db-item {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 16px;
+}
+
+.topology-db-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.topology-db-main h3 {
+    margin: 0;
+    color: #172554;
+    font-size: 1.08rem;
+    font-weight: 900;
+    overflow-wrap: anywhere;
+}
+
+.topology-db-main p {
+    color: #475569;
+    font-weight: 800;
+    line-height: 1.5;
+    margin: 4px 0 0;
+    overflow-wrap: anywhere;
+}
+
+.topology-db-data {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.topology-db-item .role-request-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 160px);
+    align-items: stretch;
+    justify-content: flex-end;
+}
+
+.topology-db-item .role-request-actions .btn-panel {
+    width: 160px;
+    height: 44px;
+    min-height: 44px;
+    padding-inline: 8px;
+    font-size: 0.88rem;
+    line-height: 1;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.topology-db-item .role-request-actions form,
+.topology-db-item .role-request-actions button {
+    margin: 0;
+}
+
+.topology-db-item .role-request-actions form .btn-panel {
+    width: 100%;
+}
+
+.topology-json-source[hidden] {
+    display: none !important;
+}
+
+.topology-json-dialog {
+    width: min(100%, 1120px);
+}
+
+.topology-json-modal-content {
+    width: 100%;
+    max-height: min(68vh, 720px);
+    overflow: auto;
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    margin: 0;
+    padding: 18px;
+    tab-size: 2;
+    white-space: pre;
 }
 
 .operator-item {
@@ -819,12 +984,145 @@ button {
 .dashboard-content-grid .topology-view-card,
 .dashboard-content-grid .role-requests-panel,
 .dashboard-content-grid .profile-card,
-.dashboard-content-grid .operators-panel {
+.dashboard-content-grid .operators-panel,
+.dashboard-content-grid .topologies-panel {
     grid-column: 1 / -1;
 }
 
 .dashboard-server-form {
     margin-bottom: 18px;
+}
+
+.network-status-panel {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #f8fafc;
+    margin-bottom: 18px;
+    padding: 16px;
+}
+
+.network-status-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.network-status-heading p {
+    color: #64748b;
+    font-size: 0.74rem;
+    font-weight: 900;
+    margin: 0 0 3px;
+    text-transform: uppercase;
+}
+
+.network-status-heading h3 {
+    color: #172554;
+    font-size: 1.02rem;
+    font-weight: 900;
+    margin: 0;
+}
+
+.network-status-body {
+    display: grid;
+    gap: 12px;
+}
+
+.network-status-placeholder {
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 54px;
+    padding: 12px;
+    font-weight: 800;
+}
+
+.network-status-placeholder i {
+    color: #D4AF37;
+}
+
+.network-status-placeholder.is-error {
+    border-color: rgba(220, 38, 38, 0.28);
+    background: #fff1f3;
+    color: #b42318;
+}
+
+.network-status-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.network-status-kpi {
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    background: #ffffff;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 9px;
+    row-gap: 2px;
+    min-width: 0;
+    padding: 11px;
+}
+
+.network-status-kpi i {
+    color: #172554;
+    grid-row: span 2;
+}
+
+.network-status-kpi small {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.network-status-kpi strong {
+    color: #172554;
+    font-size: 1rem;
+    font-weight: 900;
+    overflow-wrap: anywhere;
+}
+
+.network-status-kpi.is-success {
+    background: #ecfdf3;
+    border-color: rgba(22, 163, 74, 0.28);
+}
+
+.network-status-kpi.is-warning {
+    background: #fffbeb;
+    border-color: rgba(212, 175, 55, 0.4);
+}
+
+.network-status-details {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+}
+
+.network-status-details div {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 9px;
+}
+
+.network-status-details dt {
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.network-status-details dd {
+    color: #0f172a;
+    font-size: 0.86rem;
+    font-weight: 800;
+    margin: 2px 0 0;
+    overflow-wrap: anywhere;
 }
 
 .dashboard-topology-stage {
@@ -1692,13 +1990,19 @@ button {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .network-status-summary,
+    .network-status-details {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .server-form {
         grid-template-columns: 1fr auto;
     }
 
     .role-request-filters,
     .role-request-data,
-    .operators-layout {
+    .operators-layout,
+    .topologies-layout {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -1738,11 +2042,13 @@ button {
     .role-request-filters,
     .role-request-data,
     .operators-layout,
+    .topologies-layout,
     .permission-actions {
         grid-template-columns: 1fr;
     }
 
-    .operator-create-section {
+    .operator-create-section,
+    .topology-upload-section {
         border-right: none;
         border-bottom: 1px solid #dbe3ef;
         padding-right: 0;
@@ -1750,7 +2056,6 @@ button {
     }
 
     .role-request-header,
-    .role-request-actions,
     .operator-item,
     .operator-actions {
         align-items: stretch;
@@ -1758,6 +2063,14 @@ button {
     }
 
     .role-request-actions .btn-panel {
+        width: 100%;
+    }
+
+    .topology-db-item .role-request-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .topology-db-item .role-request-actions .btn-panel {
         width: 100%;
     }
 
@@ -1779,6 +2092,16 @@ button {
     }
 
     .topology-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .network-status-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .network-status-summary,
+    .network-status-details {
         grid-template-columns: 1fr;
     }
 
