@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/dashboard.css?v=20260523-split-css">
-    <script src="/js/guest-dashboard.js?v=20260526-admin-topology" defer></script>
+    <script type="module" src="/js/network-dashboard.js?v=20260527-network-modules" defer></script>
 </head>
 <body class="dashboard-page">
     <div class="dashboard-shell">
@@ -100,22 +100,81 @@
                         </button>
                     </form>
 
-                    <div class="network-status-panel" data-controller-status-panel>
-                        <div class="network-status-heading">
-                            <div>
-                                <p>Controlador SDN</p>
-                                <h3>Estado del controlador</h3>
-                            </div>
-                            <button type="button" class="topology-refresh-button" data-controller-status-refresh>
-                                <i class="fas fa-arrows-rotate"></i>
-                                Consultar estado
+                    <div class="network-status-tabs" data-network-status-tabs>
+                        <div class="network-status-tablist" role="tablist" aria-label="Estados de red">
+                            <button type="button"
+                                    class="network-status-tab is-active"
+                                    role="tab"
+                                    aria-selected="true"
+                                    aria-controls="controller-status-tab"
+                                    id="controller-status-tab-button"
+                                    data-status-tab="controller">
+                                <i class="fas fa-microchip"></i>
+                                Ryu
+                            </button>
+                            <button type="button"
+                                    class="network-status-tab"
+                                    role="tab"
+                                    aria-selected="false"
+                                    aria-controls="mininet-status-tab"
+                                    id="mininet-status-tab-button"
+                                    data-status-tab="mininet">
+                                <i class="fas fa-server"></i>
+                                Mininet
                             </button>
                         </div>
-                        <div class="network-status-body" data-controller-status-body>
-                            <span class="network-status-placeholder">
+
+                        <div class="network-status-panel is-active"
+                             id="controller-status-tab"
+                             role="tabpanel"
+                             aria-labelledby="controller-status-tab-button"
+                             data-status-panel="controller"
+                             data-controller-status-panel>
+                            <div class="network-status-heading">
+                                <div>
+                                    <p>Controlador SDN</p>
+                                    <h3>Estado del controlador</h3>
+                                </div>
+                                <button type="button" class="topology-refresh-button" data-controller-status-refresh>
+                                    <i class="fas fa-arrows-rotate"></i>
+                                    Consultar estado
+                                </button>
+                            </div>
+                            <div class="network-status-body" data-controller-status-body>
+                                <span class="network-status-placeholder">
+                                    <i class="fas fa-circle-info"></i>
+                                    Pulsa consultar estado para leer la API de Ryu.
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="network-status-panel"
+                             id="mininet-status-tab"
+                             role="tabpanel"
+                             aria-labelledby="mininet-status-tab-button"
+                             data-status-panel="mininet"
+                             data-mininet-status-panel
+                             hidden>
+                            <div class="network-status-heading">
+                                <div>
+                                    <p>Mininet</p>
+                                    <h3>Estado de la topologia en ejecucion</h3>
+                                </div>
+                                <button type="button" class="topology-refresh-button" data-mininet-status-refresh>
+                                    <i class="fas fa-arrows-rotate"></i>
+                                    Consultar Mininet
+                                </button>
+                            </div>
+                            <div class="mininet-status-note">
                                 <i class="fas fa-circle-info"></i>
-                                Pulsa consultar estado para leer la API de Ryu.
-                            </span>
+                                Esta vista muestra la topologia cargada en Mininet. Tras arrancar o cambiar la red, Ryu puede tardar unos segundos en descubrirla y reflejarla en la vista principal.
+                            </div>
+                            <div class="network-status-body" data-mininet-status-body>
+                                <span class="network-status-placeholder">
+                                    <i class="fas fa-server"></i>
+                                    Pulsa consultar Mininet para leer el estado de la red en ejecucion.
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -124,6 +183,158 @@
                             <i class="fas fa-network-wired"></i>
                             <h3>Sin datos cargados todavia</h3>
                             <p>Introduce el servidor de la API y pulsa conectar para ver la topología.</p>
+                        </div>
+                    </div>
+
+                    <div class="network-status-panel stp-status-panel" data-stp-status-panel>
+                        <div class="network-status-heading">
+                            <div>
+                                <p>Control de bucles</p>
+                                <h3>Estado STP</h3>
+                            </div>
+                            <button type="button" class="topology-refresh-button" data-stp-refresh>
+                                <i class="fas fa-arrows-rotate"></i>
+                                Actualizar STP
+                            </button>
+                        </div>
+                        <div class="mininet-status-note stp-status-note">
+                            <i class="fas fa-circle-info"></i>
+                            STP evita bucles bloqueando algunos puertos. Tras cambios en la topologia, puede tardar unos segundos en converger.
+                        </div>
+                        <div class="network-status-body" data-stp-body>
+                            <span class="network-status-placeholder">
+                                <i class="fas fa-shield-halved"></i>
+                                Conecta primero con la API para consultar el estado STP.
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="network-status-panel traffic-panel" data-traffic-panel>
+                        <div class="network-status-heading">
+                            <div>
+                                <p>Pruebas activas</p>
+                                <h3>Generar trafico</h3>
+                            </div>
+                        </div>
+                        <div class="mininet-status-note traffic-status-note">
+                            <i class="fas fa-circle-info"></i>
+                            Estas pruebas generan trafico real entre hosts de Mininet. Si STP acaba de converger, espera unos segundos antes de lanzar pruebas intensivas.
+                        </div>
+                        <div class="traffic-tabs" data-traffic-tabs>
+                            <div class="traffic-tablist" role="tablist" aria-label="Tipos de trafico">
+                                <button type="button" class="traffic-tab is-active" role="tab" aria-selected="true" data-traffic-tab="ping">
+                                    <i class="fas fa-terminal"></i>
+                                    Ping
+                                </button>
+                                <button type="button" class="traffic-tab" role="tab" aria-selected="false" data-traffic-tab="pingall">
+                                    <i class="fas fa-network-wired"></i>
+                                    Ping all
+                                </button>
+                                <button type="button" class="traffic-tab" role="tab" aria-selected="false" data-traffic-tab="iperf">
+                                    <i class="fas fa-gauge-high"></i>
+                                    Iperf
+                                </button>
+                            </div>
+
+                            <div class="traffic-tab-panel is-active" data-traffic-panel-content="ping">
+                                <form class="traffic-form" data-traffic-form="ping">
+                                    <label>
+                                        Host origen
+                                        <input type="text" name="src_host" placeholder="h1" required>
+                                    </label>
+                                    <label>
+                                        Host destino
+                                        <input type="text" name="dst_host" placeholder="h2" required>
+                                    </label>
+                                    <label>
+                                        Paquetes
+                                        <input type="number" name="count" min="1" max="20" value="4">
+                                    </label>
+                                    <button type="submit" class="btn-panel">
+                                        <i class="fas fa-play"></i>
+                                        Lanzar ping
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div class="traffic-tab-panel" data-traffic-panel-content="pingall" hidden>
+                                <form class="traffic-form traffic-form-compact" data-traffic-form="pingall">
+                                    <label>
+                                        Paquetes por prueba
+                                        <input type="number" name="count" min="1" max="10" value="1">
+                                    </label>
+                                    <label>
+                                        Timeout por ping
+                                        <input type="number" name="timeout_per_ping" min="1" max="30" value="5">
+                                    </label>
+                                    <button type="submit" class="btn-panel">
+                                        <i class="fas fa-play"></i>
+                                        Probar conectividad
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div class="traffic-tab-panel" data-traffic-panel-content="iperf" hidden>
+                                <form class="traffic-form" data-traffic-form="iperf">
+                                    <label>
+                                        Host origen
+                                        <input type="text" name="src_host" placeholder="h1" required>
+                                    </label>
+                                    <label>
+                                        Host destino
+                                        <input type="text" name="dst_host" placeholder="h2" required>
+                                    </label>
+                                    <label>
+                                        Duracion
+                                        <input type="number" name="duration" min="1" max="60" value="10">
+                                    </label>
+                                    <label>
+                                        Puerto
+                                        <input type="number" name="port" min="1" max="65535" value="5201">
+                                    </label>
+                                    <label class="traffic-checkbox">
+                                        <input type="checkbox" name="udp">
+                                        UDP
+                                    </label>
+                                    <label>
+                                        Ancho de banda UDP
+                                        <input type="text" name="bandwidth" placeholder="10M">
+                                    </label>
+                                    <button type="submit" class="btn-panel">
+                                        <i class="fas fa-play"></i>
+                                        Lanzar iperf
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="traffic-result" data-traffic-result>
+                            <span class="network-status-placeholder">
+                                <i class="fas fa-wave-square"></i>
+                                Conecta primero con la API para generar trafico.
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="network-status-panel health-status-panel" data-health-status-panel>
+                        <div class="network-status-heading">
+                            <div>
+                                <p>Diagnostico</p>
+                                <h3>Metricas de salud y flujos</h3>
+                            </div>
+                            <button type="button" class="topology-refresh-button" data-health-refresh>
+                                <i class="fas fa-arrows-rotate"></i>
+                                Actualizar salud
+                            </button>
+                        </div>
+                        <div class="mininet-status-note health-status-note">
+                            <i class="fas fa-circle-info"></i>
+                            Las metricas dependen de las estadisticas que Ryu recibe de los switches. Tras cambios recientes, pueden tardar unos segundos en estabilizarse.
+                        </div>
+                        <div class="network-status-body" data-health-body>
+                            <span class="network-status-placeholder">
+                                <i class="fas fa-heart-pulse"></i>
+                                Conecta primero con la API para consultar la salud de la red.
+                            </span>
                         </div>
                     </div>
                 </article>

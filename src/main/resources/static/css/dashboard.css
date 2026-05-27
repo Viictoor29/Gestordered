@@ -993,12 +993,77 @@ button {
     margin-bottom: 18px;
 }
 
-.network-status-panel {
+.network-status-tabs {
     border: 1px solid #dbe3ef;
     border-radius: 10px;
     background: #f8fafc;
     margin-bottom: 18px;
+    overflow: hidden;
+}
+
+.network-status-tablist {
+    border-bottom: 1px solid #dbe3ef;
+    background: #eef2f7;
+    display: flex;
+    gap: 0;
+    padding: 8px;
+}
+
+.network-status-tab {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 8px 14px;
+    font-weight: 900;
+}
+
+.network-status-tab:hover {
+    color: #172554;
+    background: #ffffff;
+}
+
+.network-status-tab.is-active {
+    border-color: #dbe3ef;
+    background: #ffffff;
+    color: #172554;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+}
+
+.network-status-tab i {
+    color: #D4AF37;
+}
+
+.network-status-panel {
+    background: #f8fafc;
     padding: 16px;
+}
+
+.network-status-panel[hidden] {
+    display: none;
+}
+
+.health-status-panel {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    margin-top: 18px;
+}
+
+.stp-status-panel {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    margin-top: 18px;
+}
+
+.traffic-panel {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    margin-top: 18px;
 }
 
 .network-status-heading {
@@ -1027,6 +1092,26 @@ button {
 .network-status-body {
     display: grid;
     gap: 12px;
+}
+
+.mininet-status-note {
+    border-left: 4px solid #D4AF37;
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #334155;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.5;
+    margin: -2px 0 14px;
+    padding: 12px 14px;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.mininet-status-note i {
+    color: #C9A227;
+    margin-top: 3px;
 }
 
 .network-status-placeholder {
@@ -1123,6 +1208,565 @@ button {
     font-weight: 800;
     margin: 2px 0 0;
     overflow-wrap: anywhere;
+}
+
+.health-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.health-details {
+    margin-top: 2px;
+}
+
+.health-switch-list {
+    display: grid;
+    gap: 14px;
+}
+
+.stp-switch-list {
+    display: grid;
+    gap: 14px;
+}
+
+.health-switch-card {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 14px;
+}
+
+.stp-switch-card {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 14px;
+}
+
+.health-switch-header,
+.health-port-main,
+.flow-row-main {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.health-switch-header {
+    margin-bottom: 12px;
+}
+
+.health-switch-header p {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 900;
+    margin: 0 0 3px;
+    text-transform: uppercase;
+}
+
+.health-switch-header h4 {
+    color: #172554;
+    font-size: 1rem;
+    font-weight: 900;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.health-switch-stats,
+.health-port-data {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+}
+
+.health-switch-stats div,
+.health-port-data div {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    min-width: 0;
+    padding: 8px 9px;
+}
+
+.health-switch-stats dt,
+.health-port-data dt {
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.health-switch-stats dd,
+.health-port-data dd {
+    color: #0f172a;
+    font-size: 0.82rem;
+    font-weight: 800;
+    margin: 2px 0 0;
+    overflow-wrap: anywhere;
+}
+
+.health-switch-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin: 12px 0;
+}
+
+.health-switch-actions .topology-refresh-button.is-open {
+    border-color: rgba(212, 175, 55, 0.5);
+    background: #fffbeb;
+}
+
+.health-port-list {
+    display: grid;
+    gap: 10px;
+}
+
+.health-port-tabs {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #f8fafc;
+    margin-top: 14px;
+    overflow: hidden;
+}
+
+.health-port-tablist {
+    border-bottom: 1px solid #dbe3ef;
+    background: #eef2f7;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px;
+}
+
+.health-port-tab {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: #475569;
+    min-height: 34px;
+    padding: 7px 10px;
+    font-size: 0.82rem;
+    font-weight: 900;
+}
+
+.health-port-tab:hover {
+    background: #ffffff;
+    color: #172554;
+}
+
+.health-port-tab.is-active {
+    border-color: #dbe3ef;
+    background: #ffffff;
+    color: #172554;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.health-port-panels {
+    padding: 12px;
+}
+
+.health-port-card {
+    background: transparent;
+}
+
+.health-port-card[hidden] {
+    display: none;
+}
+
+.health-port-main strong {
+    color: #172554;
+    font-size: 0.92rem;
+    font-weight: 900;
+}
+
+.health-port-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 9px 0;
+}
+
+.health-flow-list {
+    margin-top: 12px;
+}
+
+.flow-table {
+    display: grid;
+    gap: 10px;
+}
+
+.flow-row {
+    border: 1px solid #dbe3ef;
+    border-radius: 9px;
+    background: #f8fafc;
+    padding: 12px;
+}
+
+.flow-row-main {
+    margin-bottom: 9px;
+}
+
+.flow-row-main strong {
+    color: #172554;
+    font-size: 0.9rem;
+    font-weight: 900;
+}
+
+.flow-row-main p {
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 800;
+    line-height: 1.4;
+    margin: 3px 0 0;
+    overflow-wrap: anywhere;
+}
+
+.flow-row-main span {
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.flow-readable-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.flow-readable-grid section {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    min-width: 0;
+    padding: 10px;
+}
+
+.flow-readable-grid h5 {
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 900;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+}
+
+.flow-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.flow-chip {
+    border: 1px solid #dbe3ef;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #172554;
+    display: inline-flex;
+    max-width: 100%;
+    padding: 6px 9px;
+    font-size: 0.78rem;
+    font-weight: 900;
+    overflow-wrap: anywhere;
+}
+
+.flow-chip.is-muted {
+    color: #64748b;
+}
+
+.health-inline-notice {
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    color: #475569;
+    margin: 0;
+    padding: 10px 12px;
+    font-weight: 800;
+}
+
+.health-inline-notice.is-error {
+    border-color: rgba(220, 38, 38, 0.28);
+    background: #fff1f3;
+    color: #b42318;
+}
+
+.health-inline-notice.is-loading {
+    color: #1e3c72;
+}
+
+.health-inline-notice.is-info {
+    border-color: rgba(30, 60, 114, 0.22);
+    background: #eef4ff;
+    color: #1e3c72;
+}
+
+.stp-port-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.stp-port-pill {
+    border: 1px solid #dbe3ef;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #172554;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    padding: 7px 10px;
+}
+
+.stp-port-pill strong {
+    font-size: 0.82rem;
+    font-weight: 900;
+}
+
+.stp-port-pill small {
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 900;
+}
+
+.stp-port-pill.is-success {
+    border-color: rgba(22, 163, 74, 0.28);
+    background: #ecfdf3;
+    color: #067647;
+}
+
+.stp-port-pill.is-warning {
+    border-color: rgba(212, 175, 55, 0.5);
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.stp-port-pill.is-pending {
+    border-color: rgba(212, 175, 55, 0.36);
+    background: #fff7d6;
+    color: #92400e;
+}
+
+.stp-port-pill.is-muted {
+    color: #64748b;
+}
+
+.stp-switch-details {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.traffic-tabs {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #f8fafc;
+    overflow: hidden;
+}
+
+.traffic-tablist {
+    border-bottom: 1px solid #dbe3ef;
+    background: #eef2f7;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+}
+
+.traffic-tab {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 8px 12px;
+    font-weight: 900;
+}
+
+.traffic-tab:hover,
+.traffic-tab.is-active {
+    background: #ffffff;
+    color: #172554;
+}
+
+.traffic-tab.is-active {
+    border-color: #dbe3ef;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.traffic-tab i {
+    color: #D4AF37;
+}
+
+.traffic-tab-panel {
+    padding: 14px;
+}
+
+.traffic-tab-panel[hidden] {
+    display: none;
+}
+
+.traffic-form {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.traffic-form-compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+}
+
+.traffic-form label {
+    color: #1e293b;
+    font-size: 0.85rem;
+    font-weight: 900;
+}
+
+.traffic-form input {
+    width: 100%;
+    min-height: 42px;
+    margin-top: 7px;
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    padding: 9px 11px;
+    font: inherit;
+}
+
+.traffic-form input:focus {
+    outline: none;
+    border-color: #D4AF37;
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16);
+}
+
+.traffic-checkbox {
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 42px;
+    padding: 9px 11px;
+}
+
+.traffic-checkbox input {
+    width: auto;
+    min-height: auto;
+    margin: 0;
+}
+
+.traffic-result {
+    margin-top: 14px;
+}
+
+.traffic-result-card {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 14px;
+}
+
+.traffic-result-card.is-success {
+    border-color: rgba(22, 163, 74, 0.28);
+}
+
+.traffic-result-card.is-warning {
+    border-color: rgba(212, 175, 55, 0.48);
+}
+
+.traffic-result-card.is-danger {
+    border-color: rgba(220, 38, 38, 0.28);
+}
+
+.traffic-result-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.traffic-result-header p {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 900;
+    margin: 0 0 3px;
+    text-transform: uppercase;
+}
+
+.traffic-result-header h4 {
+    color: #172554;
+    font-size: 1rem;
+    font-weight: 900;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.traffic-result-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+}
+
+.traffic-result-grid div {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    min-width: 0;
+    padding: 8px 9px;
+}
+
+.traffic-result-grid dt {
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.traffic-result-grid dd {
+    color: #0f172a;
+    font-size: 0.82rem;
+    font-weight: 800;
+    margin: 2px 0 0;
+    overflow-wrap: anywhere;
+}
+
+.traffic-command,
+.traffic-success-note {
+    color: #334155;
+    margin: 12px 0 0;
+    font-size: 0.86rem;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.traffic-failure-list {
+    border-left: 4px solid #D4AF37;
+    border-radius: 8px;
+    background: #fffbeb;
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 10px 12px;
+}
+
+.traffic-failure-list strong {
+    color: #172554;
+}
+
+.traffic-failure-list span,
+.traffic-failure-list small {
+    color: #475569;
+    font-size: 0.84rem;
+    font-weight: 800;
 }
 
 .dashboard-topology-stage {
@@ -1991,6 +2635,7 @@ button {
     }
 
     .network-status-summary,
+    .health-summary-grid,
     .network-status-details {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -2100,9 +2745,30 @@ button {
         flex-direction: column;
     }
 
+    .network-status-tablist {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .network-status-summary,
+    .health-summary-grid,
+    .health-switch-stats,
+    .health-port-data,
+    .flow-readable-grid,
+    .stp-switch-details,
+    .traffic-form,
+    .traffic-form-compact,
+    .traffic-result-grid,
     .network-status-details {
         grid-template-columns: 1fr;
+    }
+
+    .health-switch-header,
+    .health-port-main,
+    .flow-row-main,
+    .traffic-result-header {
+        align-items: stretch;
+        flex-direction: column;
     }
 
     .topology-detail {
