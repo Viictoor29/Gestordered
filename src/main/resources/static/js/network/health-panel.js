@@ -4,7 +4,6 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
 
     let refreshTimer = null;
     let isLoading = false;
-    let cachedSwitchFlows = new Map();
 
     if (refreshButton && body) {
         refreshButton.addEventListener('click', () => refresh({ manual: true }));
@@ -12,15 +11,7 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
             const portTab = event.target.closest('[data-health-port-tab]');
             if (portTab) {
                 selectPortTab(portTab);
-                return;
             }
-
-            const button = event.target.closest('[data-health-flows]');
-            if (!button) {
-                return;
-            }
-
-            toggleSwitchFlows(button.dataset.healthFlows, button);
         });
     }
 
@@ -78,67 +69,9 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
         }
     }
 
-    async function toggleSwitchFlows(dpid, button) {
-        if (!dpid || !button) {
-            return;
-        }
-
-        if (!getActiveServerUrl()) {
-            return;
-        }
-
-        const flowsTarget = Array.from(body.querySelectorAll('[data-health-flows-target]'))
-            .find(target => target.dataset.healthFlowsTarget === dpid);
-        if (!flowsTarget) {
-            return;
-        }
-
-        if (flowsTarget.dataset.loaded === 'true' && !flowsTarget.hidden) {
-            flowsTarget.hidden = true;
-            button.classList.remove('is-open');
-            button.innerHTML = '<i class="fas fa-list"></i> Ver flujos';
-            return;
-        }
-
-        if (flowsTarget.dataset.loaded === 'true' && flowsTarget.hidden) {
-            flowsTarget.hidden = false;
-            button.classList.add('is-open');
-            button.innerHTML = '<i class="fas fa-chevron-up"></i> Ocultar flujos';
-            return;
-        }
-
-        const originalHtml = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando';
-        flowsTarget.hidden = false;
-        flowsTarget.innerHTML = renderInlineNotice('loading', 'Leyendo reglas de flujo...');
-
-        try {
-            const payload = await fetchJson(buildApiUrl(`/api/switch/${encodeURIComponent(dpid)}/flows`));
-            const data = payload.data || payload;
-            const endpointFlows = extractFlows(data);
-            const cachedFlows = cachedSwitchFlows.get(dpid) || [];
-            const flows = endpointFlows.length ? endpointFlows : cachedFlows;
-            const expectedCount = Number(button.dataset.healthFlowCount || flows.length || 0);
-
-            flowsTarget.innerHTML = renderFlows(flows, expectedCount);
-            flowsTarget.dataset.loaded = 'true';
-            button.classList.add('is-open');
-            button.innerHTML = '<i class="fas fa-chevron-up"></i> Ocultar flujos';
-        } catch (error) {
-            flowsTarget.innerHTML = renderInlineNotice('error', 'No se pudieron cargar las reglas de flujo.');
-            button.innerHTML = originalHtml;
-        } finally {
-            button.disabled = false;
-        }
-    }
-
     function renderHealth(summary, health) {
         const switches = Array.isArray(health.switches) ? health.switches : [];
         const updatedAt = summary.timestamp ? formatTimestamp(summary.timestamp) : 'Pendiente';
-        cachedSwitchFlows = new Map(
-            switches.map(sw => [String(sw.dpid || ''), extractFlows(sw)])
-        );
 
         body.innerHTML = `
             <div class="health-summary-grid">
@@ -155,7 +88,6 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
             <dl class="network-status-details health-details">
                 ${detailRow('Ultima lectura', updatedAt)}
                 ${detailRow('Uptime controlador', formatDuration(summary.controller_uptime_seconds ?? health.controller_uptime_seconds))}
-                ${detailRow('Flujos totales', summary.flows?.total ?? sumSwitchFlows(switches))}
                 ${detailRow('Enlaces en inventario', summary.links?.total_inventory)}
                 ${detailRow('Enlaces habilitados', summary.links?.enabled)}
                 ${detailRow('Enlaces descubiertos', summary.links?.discovered)}
@@ -183,7 +115,6 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
                 </div>
 
                 <dl class="health-switch-stats">
-                    ${detailRow('Flujos', sw.flow_count ?? 0)}
                     ${detailRow('Trafico', formatTraffic(traffic))}
                     ${detailRow('RX errores', totals.rx_errors ?? 0)}
                     ${detailRow('TX errores', totals.tx_errors ?? 0)}
@@ -192,15 +123,6 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
                 </dl>
 
                 ${renderPortTabs(sw.dpid || 'switch', ports)}
-
-                <div class="health-switch-actions">
-                    <button type="button" class="topology-refresh-button" data-health-flows="${escapeHtml(sw.dpid || '')}" data-health-flow-count="${escapeHtml(sw.flow_count ?? 0)}">
-                        <i class="fas fa-list"></i>
-                        Ver flujos
-                    </button>
-                </div>
-
-                <div class="health-flow-list" data-health-flows-target="${escapeHtml(sw.dpid || '')}"></div>
             </article>
         `;
     }
@@ -288,51 +210,6 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
             panel.classList.toggle('is-active', isActive);
             panel.hidden = !isActive;
         });
-    }
-
-    function renderFlows(flows, expectedCount = 0) {
-        if (!flows.length) {
-            if (expectedCount > 0) {
-                return renderInlineNotice(
-                    'info',
-                    `Ryu indica ${expectedCount} regla(s) en este switch, pero no ha enviado el detalle de las reglas en esta lectura.`
-                );
-            }
-
-            return renderInlineNotice('empty', 'Este switch no tiene reglas de flujo registradas.');
-        }
-
-        return `
-            <div class="flow-table">
-                ${flows.map(flow => `
-                    <article class="flow-row">
-                        <div class="flow-row-main">
-                            <div>
-                                <strong>${escapeHtml(flowTitle(flow))}</strong>
-                                <p>${escapeHtml(flowSubtitle(flow))}</p>
-                            </div>
-                            <span>${escapeHtml(formatFlowDuration(flow))}</span>
-                        </div>
-                        <div class="flow-readable-grid">
-                            <section>
-                                <h5>Coincidencias</h5>
-                                <div class="flow-chip-list">${renderFlowChips(describeMatch(flow.match))}</div>
-                            </section>
-                            <section>
-                                <h5>Acciones</h5>
-                                <div class="flow-chip-list">${renderFlowChips(describeActions(flow))}</div>
-                            </section>
-                        </div>
-                        <dl class="health-port-data flow-counters">
-                            ${detailRow('Paquetes', flow.packet_count ?? flow.packets ?? 0)}
-                            ${detailRow('Bytes', flow.byte_count ?? flow.bytes ?? 0)}
-                            ${detailRow('Tabla', flow.table_id ?? 0)}
-                            ${detailRow('Prioridad', flow.priority ?? 'N/D')}
-                        </dl>
-                    </article>
-                `).join('')}
-            </div>
-        `;
     }
 
     async function fetchJson(url) {
@@ -423,34 +300,6 @@ function countStpBlockedPorts(switches) {
     return switches.flatMap(sw => sw.ports || [])
         .filter(port => (port.health || port).stp_blocked)
         .length;
-}
-
-function sumSwitchFlows(switches) {
-    return switches.reduce((total, sw) => total + Number(sw.flow_count || 0), 0);
-}
-
-function extractFlows(value) {
-    if (Array.isArray(value)) {
-        return value;
-    }
-
-    if (!value || typeof value !== 'object') {
-        return [];
-    }
-
-    if (Array.isArray(value.flows)) {
-        return value.flows;
-    }
-
-    if (Array.isArray(value.flow_stats)) {
-        return value.flow_stats;
-    }
-
-    if (value.data) {
-        return extractFlows(value.data);
-    }
-
-    return [];
 }
 
 function formatOverallStatus(status) {
@@ -589,120 +438,6 @@ function formatTimestamp(seconds) {
     });
 }
 
-function formatFlowDuration(flow) {
-    if (flow.duration_sec !== undefined) {
-        return formatDuration(flow.duration_sec);
-    }
-
-    if (flow.duration_nsec !== undefined) {
-        return `${flow.duration_nsec} ns`;
-    }
-
-    return 'Duracion no disponible';
-}
-
-function flowTitle(flow) {
-    const priority = flow.priority ?? 'N/D';
-    const match = normalizeFlowMatch(flow.match);
-
-    if (match.in_port !== undefined) {
-        return `Regla de puerto ${match.in_port}`;
-    }
-
-    return `Regla de prioridad ${priority}`;
-}
-
-function flowSubtitle(flow) {
-    const actions = describeActions(flow);
-    return actions.length ? actions.join(' · ') : 'Sin accion registrada';
-}
-
-function renderFlowChips(items) {
-    if (!items.length) {
-        return '<span class="flow-chip is-muted">Cualquier trafico</span>';
-    }
-
-    return items.map(item => `<span class="flow-chip">${escapeHtml(item)}</span>`).join('');
-}
-
-function describeMatch(match) {
-    const normalized = normalizeFlowMatch(match);
-    const labels = {
-        in_port: 'Puerto entrada',
-        eth_src: 'MAC origen',
-        eth_dst: 'MAC destino',
-        ipv4_src: 'IP origen',
-        ipv4_dst: 'IP destino',
-        ip_proto: 'Protocolo IP',
-        tcp_src: 'TCP origen',
-        tcp_dst: 'TCP destino',
-        udp_src: 'UDP origen',
-        udp_dst: 'UDP destino',
-        arp_spa: 'ARP origen',
-        arp_tpa: 'ARP destino',
-        eth_type: 'Tipo Ethernet'
-    };
-
-    return Object.entries(normalized).map(([key, value]) => `${labels[key] || key}: ${value}`);
-}
-
-function normalizeFlowMatch(match) {
-    if (!match) {
-        return {};
-    }
-
-    if (typeof match === 'object' && !Array.isArray(match)) {
-        return match;
-    }
-
-    if (typeof match === 'string') {
-        try {
-            return JSON.parse(match);
-        } catch (error) {
-            return parseKeyValues(match);
-        }
-    }
-
-    return {};
-}
-
-function describeActions(flow) {
-    const raw = flow.actions || flow.instructions || flow.action;
-    const text = formatFlowObject(raw);
-    const outputMatches = [...text.matchAll(/(?:OUTPUT|port=)(?:[:=])?(\d+|CONTROLLER|FLOOD|LOCAL)/gi)]
-        .map(match => `Enviar a ${formatOutputPort(match[1])}`);
-
-    if (outputMatches.length) {
-        return [...new Set(outputMatches)];
-    }
-
-    if (!raw) {
-        return [];
-    }
-
-    return [text];
-}
-
-function formatOutputPort(port) {
-    const labels = {
-        CONTROLLER: 'controlador',
-        FLOOD: 'todos los puertos',
-        LOCAL: 'puerto local'
-    };
-
-    return labels[String(port).toUpperCase()] || `puerto ${port}`;
-}
-
-function parseKeyValues(value) {
-    const result = {};
-    const matches = String(value).matchAll(/["']?([A-Za-z0-9_:-]+)["']?\s*[:=]\s*["']?([^"',}\]\s]+)["']?/g);
-
-    for (const match of matches) {
-        result[match[1]] = match[2];
-    }
-
-    return result;
-}
 
 function buildPortPanelId(groupId, portNo, index) {
     return `health-port-${groupId}-${sanitizeId(portNo ?? index)}`;
@@ -712,22 +447,6 @@ function sanitizeId(value) {
     return String(value || 'item').replace(/[^A-Za-z0-9_-]+/g, '-');
 }
 
-function formatFlowObject(value) {
-    if (value === undefined || value === null) {
-        return 'Cualquiera';
-    }
-
-    if (typeof value === 'string') {
-        return value;
-    }
-
-    return JSON.stringify(value);
-}
-
-function formatFlowActions(flow) {
-    const actions = flow.actions || flow.instructions || flow.action;
-    return formatFlowObject(actions);
-}
 
 function escapeHtml(value) {
     return String(value)

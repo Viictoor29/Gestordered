@@ -20,8 +20,17 @@ export function initTrafficPanel({ serverInput, getServerUrl, onTrafficComplete 
         });
     });
 
+    function setConnected() {
+        if (!result || result.querySelector('.traffic-result-card')) {
+            return;
+        }
+
+        result.innerHTML = renderPlaceholder('ready', 'Selecciona una prueba y lanza trafico entre hosts.');
+    }
+
     async function submitTrafficForm(form) {
         if (!getActiveServerUrl()) {
+            result.innerHTML = renderPlaceholder('error', 'Conecta primero con la API para generar trafico.');
             return;
         }
 
@@ -131,7 +140,7 @@ export function initTrafficPanel({ serverInput, getServerUrl, onTrafficComplete 
         return typeof getServerUrl === 'function' ? getServerUrl() : normalizeServer(serverInput.value);
     }
 
-    return {};
+    return { setConnected };
 }
 
 function renderTrafficResult(type, data) {
@@ -242,9 +251,13 @@ function renderCommand(command) {
 }
 
 function renderPlaceholder(type, text) {
+    const icon = type === 'loading'
+        ? 'fa-spinner fa-spin'
+        : (type === 'ready' ? 'fa-circle-info' : 'fa-triangle-exclamation');
+
     return `
         <span class="network-status-placeholder is-${type}">
-            <i class="fas ${type === 'loading' ? 'fa-spinner fa-spin' : 'fa-triangle-exclamation'}"></i>
+            <i class="fas ${icon}"></i>
             ${escapeHtml(text)}
         </span>
     `;

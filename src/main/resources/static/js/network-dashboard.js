@@ -1,7 +1,16 @@
 import { initNetworkStatusPanels } from './network/status-panels.js';
+import { initBlockedIpsPanel } from './network/blocked-ips-panel.js';
 import { initHealthPanel } from './network/health-panel.js';
 import { initStpPanel } from './network/stp-panel.js';
 import { initTrafficPanel } from './network/traffic-panel.js';
+import {
+    bindEdgeDegradationForm,
+    bindEdgeStateActions,
+    bindNodeIpTrafficActions,
+    renderEdgeDegradationControl,
+    renderEdgeStateControl,
+    renderNodeIpTrafficControl
+} from './network/contextual-actions.js';
 
 (() => {
     const form = document.querySelector('[data-server-form]');
@@ -44,11 +53,21 @@ import { initTrafficPanel } from './network/traffic-panel.js';
         refreshIntervalMs,
         getServerUrl: () => currentServer
     });
-    initTrafficPanel({
+    const trafficPanel = initTrafficPanel({
         serverInput: input,
         getServerUrl: () => currentServer,
         onTrafficComplete: () => healthPanel.refresh()
     });
+    const blockedIpsPanel = initBlockedIpsPanel({
+        getServerUrl: () => currentServer
+    });
+    const contextualActionContext = {
+        getServerUrl: () => currentServer,
+        refreshTopology: () => loadTopology(),
+        refreshHealth: () => healthPanel.refresh(),
+        refreshStp: () => stpPanel.refresh(),
+        refreshBlockedIps: () => blockedIpsPanel.refresh()
+    };
 
     bindRoleRequestForms();
 
@@ -178,6 +197,8 @@ import { initTrafficPanel } from './network/traffic-panel.js';
             networkStatusPanels.refreshAll();
             stpPanel.refresh();
             healthPanel.refresh();
+            blockedIpsPanel.refresh();
+            trafficPanel.setConnected();
             startAutoRefresh();
         } catch (error) {
             setStatus('error', 'Sin conexion');
@@ -269,7 +290,7 @@ import { initTrafficPanel } from './network/traffic-panel.js';
                     </svg>
                     <div class="topology-legend" aria-label="Leyenda de estados">
                         <span><i class="legend-dot is-up"></i> Activo</span>
-                        <span><i class="legend-dot is-down"></i> Caido</span>
+                        <span><i class="legend-dot is-down"></i> Desactivado</span>
                         <span><i class="legend-dot is-blocked"></i> Bloqueado</span>
                     </div>
                 </div>
@@ -346,7 +367,7 @@ import { initTrafficPanel } from './network/traffic-panel.js';
                 ${detailRow('Switches', summary.switches)}
                 ${detailRow('Hosts', summary.hosts)}
                 ${detailRow('Enlaces activos', summary.linksUp)}
-                ${detailRow('Enlaces caidos', summary.linksDown)}
+                ${detailRow('Enlaces desactivados', summary.linksDown)}
                 ${detailRow('Elementos bloqueados', summary.blocked)}
                 ${detailRow('Enlaces con avisos de salud', summary.degraded)}
             </dl>
@@ -513,11 +534,14 @@ import { initTrafficPanel } from './network/traffic-panel.js';
         if (item.dataset.detailType === 'node') {
             const node = nodes.find(candidate => candidate.id === item.dataset.detailId);
             detail.innerHTML = renderNodeDetail(node, edges);
+            bindNodeIpTrafficActions(detail, node, contextualActionContext);
             return;
         }
 
         const edge = edges[Number(item.dataset.detailId)];
         detail.innerHTML = renderEdgeDetail(edge);
+        bindEdgeStateActions(detail, edge, contextualActionContext);
+        bindEdgeDegradationForm(detail, edge, contextualActionContext);
     }
 
     function renderNodeDetail(node, edges = []) {
@@ -545,6 +569,7 @@ import { initTrafficPanel } from './network/traffic-panel.js';
                 ${statusBadge(state, node.connected === false ? 'is-danger' : 'is-success')}
                 ${statusBadge(isNodeBlocked(node) ? 'Bloqueado' : 'Permitido', isNodeBlocked(node) ? 'is-danger' : 'is-success')}
             </div>
+            ${renderNodeIpTrafficControl(node)}
             ${detailSection('Identidad', [
                 ['ID', node.id],
                 ['Tipo', formatType(node.type)],
@@ -604,25 +629,16 @@ import { initTrafficPanel } from './network/traffic-panel.js';
         const tcRows = isHostLink
             ? [
                 ['Retardo', formatTcValue(edge.tc_sw_port?.delay)],
-                ['Perdida de paquetes', formatTcValue(edge.tc_sw_port?.loss)],
+                ['Perdida de paquetes', formatLossValue(edge.tc_sw_port?.loss)],
                 ['Ancho de banda', formatTcValue(edge.tc_sw_port?.bandwidth)]
             ]
             : [
                 ['Retardo en origen', formatTcValue(edge.src_tc?.delay)],
-                ['Perdida en origen', formatTcValue(edge.src_tc?.loss)],
+                ['Perdida en origen', formatLossValue(edge.src_tc?.loss)],
                 ['Ancho de banda en origen', formatTcValue(edge.src_tc?.bandwidth)],
                 ['Retardo en destino', formatTcValue(edge.dst_tc?.delay)],
-                ['Perdida en destino', formatTcValue(edge.dst_tc?.loss)],
+                ['Perdida en destino', formatLossValue(edge.dst_tc?.loss)],
                 ['Ancho de banda en destino', formatTcValue(edge.dst_tc?.bandwidth)]
-            ];
-        const degradationRows = isHostLink
-            ? [
-                ['Degradacion del enlace', formatDegradation(edge['degradation-link'])]
-            ]
-            : [
-                ['Degradacion en origen', formatDegradation(edge.src_degradation)],
-                ['Degradacion en destino', formatDegradation(edge.dst_degradation)],
-                ['Degradacion del enlace', formatDegradation(edge['degradation-link'])]
             ];
         const linkStpRows = isHostLink
             ? []
@@ -644,8 +660,10 @@ import { initTrafficPanel } from './network/traffic-panel.js';
             <div class="detail-badges">
                 ${statusBadge(formatEdgeState(edge), getEdgeStateBadgeClass(edge))}
                 ${statusBadge(formatHealth(degradation), degradation === 'healthy' ? 'is-success' : 'is-warning')}
-                ${statusBadge(isEdgeBlocked(edge) ? 'Bloqueado para evitar bucles' : 'Enviando trafico', isEdgeBlocked(edge) ? 'is-warning' : 'is-success')}
+                ${renderEdgeTrafficBadge(edge)}
             </div>
+            ${renderEdgeStateControl(edge)}
+            ${renderEdgeDegradationControl(edge)}
             ${detailSection('Extremos', endpointRows)}
             ${detailSection('Estado operativo', [
                 ['Estado', formatState(edge.state)],
@@ -656,7 +674,6 @@ import { initTrafficPanel } from './network/traffic-panel.js';
                 ['IPs bloqueadas', formatList(edge.blocked_ipv4)]
             ])}
             ${detailSection('TC', tcRows)}
-            ${detailSection('Degradacion', degradationRows)}
             ${detailSection('STP', linkStpRows)}
             ${renderExtraSection(edge, ['type', 'source-h', 'target-s', 'source', 'target', 'mac', 'src_port', 'dst_port', 's-port', 'src_iface', 'dst_iface', 's-iface', 'state', 'enabled', 'forwarding', 'discovered', 'inventory_state', 'manual_disabled', 'admin_state', 'blocked_ipv4', 'stp_state', 'stp_blocked', 'stp', 'tc_sw_port', 'src_tc', 'dst_tc', 'src_degradation', 'dst_degradation', 'degradation-link'])}
         `;
@@ -842,7 +859,7 @@ import { initTrafficPanel } from './network/traffic-panel.js';
     function formatState(value) {
         const labels = {
             up: 'Activo',
-            down: 'Caido',
+            down: 'Desactivado',
             disabled: 'Deshabilitado',
             deleted: 'Eliminado',
             switch_removed: 'Switch eliminado',
@@ -887,7 +904,7 @@ import { initTrafficPanel } from './network/traffic-panel.js';
             healthy: 'Salud correcta',
             warning: 'Salud con aviso',
             degraded: 'Salud degradada',
-            down: 'Caido'
+            down: 'Desactivado'
         };
 
         return labels[value] || value;
@@ -898,7 +915,7 @@ import { initTrafficPanel } from './network/traffic-panel.js';
             healthy: 'Sin degradacion',
             warning: 'Aviso de degradacion',
             degraded: 'Degradado',
-            down: 'Caido'
+            down: 'Desactivado'
         };
 
         return labels[value] || value;
@@ -948,27 +965,78 @@ import { initTrafficPanel } from './network/traffic-panel.js';
         return value === undefined ? undefined : value;
     }
 
+    function formatLossValue(value) {
+        if (value === undefined) {
+            return undefined;
+        }
+
+        if (value === null || value === '') {
+            return value;
+        }
+
+        return String(value).endsWith('%') ? value : `${value}%`;
+    }
+
     function isNodeBlocked(node) {
+        if (node.type === 'switch') {
+            return false;
+        }
+
         return Boolean(
             node.ip_blocked ||
             node.traffic_blocked ||
-            (Array.isArray(node.blocked_ipv4) && node.blocked_ipv4.length) ||
-            (Array.isArray(node.traffic_filters?.blocked_ipv4) && node.traffic_filters.blocked_ipv4.length)
+            (Array.isArray(node.blocked_ipv4) && node.blocked_ipv4.length)
         );
     }
 
     function isEdgeUp(edge) {
-        return edge.enabled !== false && edge.forwarding !== false && edge.state !== 'down';
+        return !isEdgeDown(edge);
+    }
+
+    function isEdgeDown(edge) {
+        const state = normalizeStateValue(edge.state);
+        const adminState = normalizeStateValue(edge.admin_state);
+        const srcAdminState = normalizeStateValue(edge.admin_state?.src);
+        const dstAdminState = normalizeStateValue(edge.admin_state?.dst);
+        const inventoryState = normalizeStateValue(edge.inventory_state);
+
+        return Boolean(
+            edge.enabled === false ||
+            edge.manual_disabled === true ||
+            state === 'down' ||
+            state === 'disabled' ||
+            adminState === 'down' ||
+            adminState === 'disabled' ||
+            srcAdminState === 'down' ||
+            srcAdminState === 'disabled' ||
+            dstAdminState === 'down' ||
+            dstAdminState === 'disabled' ||
+            inventoryState === 'down' ||
+            inventoryState === 'disabled'
+        );
     }
 
     function isEdgeBlocked(edge) {
+        if (isEdgeDown(edge)) {
+            return false;
+        }
+
+        const state = normalizeStateValue(edge.state);
+
         return Boolean(
-            edge.state === 'blocked_by_stp' ||
+            state === 'blocked_by_stp' ||
+            state === 'stp_converging' ||
+            state === 'stp_unknown' ||
             edge.stp_blocked ||
             edge.host_ip_blocked ||
             edge.stp?.src_blocked ||
-            edge.stp?.dst_blocked
+            edge.stp?.dst_blocked ||
+            edge.forwarding === false
         );
+    }
+
+    function normalizeStateValue(value) {
+        return typeof value === 'string' ? value.toLowerCase() : value;
     }
 
     function getEdgeDegradation(edge) {
@@ -982,7 +1050,7 @@ import { initTrafficPanel } from './network/traffic-panel.js';
     }
 
     function formatEdgeState(edge) {
-        return formatState(edge.state) || (isEdgeUp(edge) ? 'Activo' : 'Caido');
+        return formatState(edge.state) || (isEdgeUp(edge) ? 'Activo' : 'Desactivado');
     }
 
     function getEdgeStateBadgeClass(edge) {
@@ -991,6 +1059,18 @@ import { initTrafficPanel } from './network/traffic-panel.js';
         }
 
         return isEdgeUp(edge) ? 'is-success' : 'is-danger';
+    }
+
+    function renderEdgeTrafficBadge(edge) {
+        if (isEdgeDown(edge)) {
+            return statusBadge('Enlace deshabilitado', 'is-danger');
+        }
+
+        if (isEdgeBlocked(edge)) {
+            return statusBadge('Bloqueado por STP', 'is-warning');
+        }
+
+        return statusBadge('Enviando trafico', 'is-success');
     }
 
     function formatAdminState(edge) {

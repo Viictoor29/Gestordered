@@ -258,7 +258,6 @@ function renderControllerStatus(data) {
             ${detailRow('Versiones OpenFlow', ofpVersions || 'No disponible')}
             ${detailRow('Intervalo monitorizacion', formatSeconds(controller.monitor_interval_seconds))}
             ${detailRow('Switches con estadisticas de puertos', summary.port_stats_switches)}
-            ${detailRow('Switches con estadisticas de flujos', summary.flow_stats_switches)}
             ${detailRow('Puertos bloqueados por STP', summary.stp_blocked_ports)}
         </dl>
     `;
