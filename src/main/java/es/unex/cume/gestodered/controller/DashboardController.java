@@ -29,6 +29,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -283,19 +284,7 @@ public class DashboardController {
             String cleanName = normalizeTopologyName(name, payload, file.getOriginalFilename());
             String cleanDescription = normalizeTopologyDescription(description, payload);
 
-            topologyRepository.findByName(cleanName).ifPresent(existing -> {
-                throw new IllegalStateException("Ya existe una topologia con ese nombre.");
-            });
-
-            Topology topology = new Topology();
-            topology.setName(cleanName);
-            topology.setDescription(cleanDescription);
-            topology.setData(topologyData);
-            topology.setCreatedBy(admin.getId() != null && ObjectId.isValid(admin.getId()) ? new ObjectId(admin.getId()) : null);
-            topology.setCreatedAt(Instant.now());
-            topology.setUpdatedAt(Instant.now());
-
-            topologyRepository.save(topology);
+            saveTopology(admin, cleanName, cleanDescription, topologyData);
             redirectAttributes.addFlashAttribute("topologySuccess", "Topologia subida correctamente.");
         } catch (DuplicateKeyException exception) {
             redirectAttributes.addFlashAttribute("topologyError", "Ya existe una topologia con ese nombre.");
@@ -304,6 +293,47 @@ public class DashboardController {
         }
 
         return "redirect:/dashboard/topologies";
+    }
+
+    @PostMapping(
+            value = "/dashboard/topologies/save",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, Object>> saveTopology(
+            @RequestBody(required = false) Map<String, Object> body,
+            Authentication authentication) {
+        try {
+            User admin = requireAdmin(authentication);
+            if (body == null) {
+                throw new IllegalArgumentException("No se ha recibido la topologia.");
+            }
+
+            Object rawPayload = body.get("payload");
+            if (!(rawPayload instanceof Map<?, ?> rawMap)) {
+                throw new IllegalArgumentException("No se ha recibido la topologia.");
+            }
+
+            Map<String, Object> payload = toStringObjectMap(rawMap);
+            String cleanName = normalizeTopologyName(stringValue(body.get("name")), payload, null);
+            String cleanDescription = normalizeTopologyDescription(stringValue(body.get("description")), payload);
+            Map<String, Object> topologyData = extractTopologyData(payload);
+
+            saveTopology(admin, cleanName, cleanDescription, topologyData);
+            return ResponseEntity.ok(Map.of(
+                    "ok", true,
+                    "message", "Topologia guardada correctamente."
+            ));
+        } catch (DuplicateKeyException exception) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "ok", false,
+                    "error", "Ya existe una topologia con ese nombre."
+            ));
+        } catch (Exception exception) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "ok", false,
+                    "error", messageOrDefault(exception, "No se pudo guardar la topologia.")
+            ));
+        }
     }
 
     @GetMapping("/dashboard/topologies/{id}/download")
@@ -487,6 +517,22 @@ public class DashboardController {
         return exportPayload;
     }
 
+    private void saveTopology(User admin, String name, String description, Map<String, Object> topologyData) {
+        topologyRepository.findByName(name).ifPresent(existing -> {
+            throw new IllegalStateException("Ya existe una topologia con ese nombre.");
+        });
+
+        Topology topology = new Topology();
+        topology.setName(name);
+        topology.setDescription(description);
+        topology.setData(topologyData);
+        topology.setCreatedBy(admin.getId() != null && ObjectId.isValid(admin.getId()) ? new ObjectId(admin.getId()) : null);
+        topology.setCreatedAt(Instant.now());
+        topology.setUpdatedAt(Instant.now());
+
+        topologyRepository.save(topology);
+    }
+
     private Object toBsonValue(Object value) {
         if (value instanceof Map<?, ?> map) {
             Document document = new Document();
@@ -505,6 +551,12 @@ public class DashboardController {
         Object bsonValue = toBsonValue(data == null ? Map.of() : data);
         String json = bsonValue instanceof Document document ? document.toJson() : new Document("data", bsonValue).toJson();
         return json.getBytes(StandardCharsets.UTF_8);
+    }
+
+    private Map<String, Object> toStringObjectMap(Map<?, ?> rawMap) {
+        Map<String, Object> converted = new LinkedHashMap<>();
+        rawMap.forEach((key, value) -> converted.put(String.valueOf(key), value));
+        return converted;
     }
 
     @SuppressWarnings("unchecked")
@@ -539,6 +591,10 @@ public class DashboardController {
         }
 
         return value.length() > 240 ? value.substring(0, 240) : value;
+    }
+
+    private String stringValue(Object value) {
+        return value == null ? "" : String.valueOf(value);
     }
 
     private String filenameWithoutExtension(String originalFilename) {

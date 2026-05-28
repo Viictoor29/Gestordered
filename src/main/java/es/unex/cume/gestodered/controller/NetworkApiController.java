@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 
 @Controller
@@ -163,6 +164,57 @@ public class NetworkApiController {
     public ResponseEntity<String> exportMininetTopology(Authentication authentication, HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
         return networkApiClient.mininet(HttpMethod.GET, "/api/mininet/topology/export", null, request);
+    }
+
+    @GetMapping("/api/admin/mininet/topology/export")
+    public ResponseEntity<String> exportMininetTopologyFrom(
+            @RequestParam String serverUrl,
+            Authentication authentication) {
+        requireRole(authentication, ADMIN_ROLES);
+        return networkApiClient.absolute(serverUrl, HttpMethod.GET, "/api/mininet/topology/export", null);
+    }
+
+    @GetMapping("/api/admin/ryu/topology/export")
+    public ResponseEntity<String> exportRyuTopologyFrom(
+            @RequestParam String serverUrl,
+            Authentication authentication) {
+        requireRole(authentication, ADMIN_ROLES);
+        return networkApiClient.absolute(serverUrl, HttpMethod.GET, "/api/topology/export", null);
+    }
+
+    @GetMapping("/api/admin/ryu/topology")
+    public ResponseEntity<String> getRyuTopologyFrom(
+            @RequestParam String serverUrl,
+            Authentication authentication) {
+        requireRole(authentication, ADMIN_ROLES);
+        return networkApiClient.absolute(serverUrl, HttpMethod.GET, "/api/topology", null);
+    }
+
+    @PostMapping("/api/admin/ryu/topology/import")
+    public ResponseEntity<String> importRyuTopologyFrom(
+            @RequestParam String serverUrl,
+            @RequestBody(required = false) String body,
+            Authentication authentication) {
+        requireRole(authentication, ADMIN_ROLES);
+        return networkApiClient.absolute(serverUrl, HttpMethod.POST, "/api/topology/import", body);
+    }
+
+    @PostMapping("/api/admin/mininet/topology/apply")
+    public ResponseEntity<String> applyMininetTopologyFrom(
+            @RequestParam String serverUrl,
+            @RequestBody(required = false) String body,
+            Authentication authentication) {
+        requireRole(authentication, ADMIN_ROLES);
+        return networkApiClient.absolute(serverUrl, HttpMethod.POST, "/api/mininet/topology/apply", body);
+    }
+
+    @PostMapping("/api/admin/ryu/controller/runtime/reset")
+    public ResponseEntity<String> resetRyuRuntimeFrom(
+            @RequestParam String serverUrl,
+            @RequestBody(required = false) String body,
+            Authentication authentication) {
+        requireRole(authentication, ADMIN_ROLES);
+        return networkApiClient.absolute(serverUrl, HttpMethod.POST, "/api/controller/runtime/reset", body);
     }
 
     @PostMapping({

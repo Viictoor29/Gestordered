@@ -37,6 +37,10 @@ public class NetworkApiClient {
         return exchange(mininetApiUrl, method, path, body, request);
     }
 
+    public ResponseEntity<String> absolute(String baseUrl, HttpMethod method, String path, String body) {
+        return exchange(trimTrailingSlash(baseUrl), method, path, body, null);
+    }
+
     private ResponseEntity<String> exchange(
             String baseUrl,
             HttpMethod method,

@@ -32,6 +32,9 @@ import {
     const savedServer = localStorage.getItem('gestordered-api-server');
     if (savedServer) {
         input.value = savedServer;
+        if (sessionStorage.getItem('gestordered-api-connected') === 'true') {
+            window.setTimeout(() => loadTopology(), 0);
+        }
     }
 
     form.addEventListener('submit', event => {
@@ -195,24 +198,60 @@ import {
             const edges = Array.isArray(topology.edges) ? topology.edges : [];
 
             localStorage.setItem('gestordered-api-server', input.value.trim());
+            sessionStorage.setItem('gestordered-api-connected', 'true');
             lastUpdatedAt = new Date();
             setStatus('connected', 'Conectado');
             renderTopology(nodes, edges);
-            networkStatusPanels.refreshAll();
-            stpPanel.refresh();
-            healthPanel.refresh();
-            blockedIpsPanel.refresh();
+            refreshLivePanels();
             trafficPanel.setConnected();
+            notifyConnectionChange();
             startAutoRefresh();
         } catch (error) {
+            currentServer = '';
+            sessionStorage.removeItem('gestordered-api-connected');
             setStatus('error', 'Sin conexion');
             renderMessage('No se pudo cargar la topologia', 'Comprueba que la API este levantada y permita peticiones desde esta web.');
+            notifyConnectionChange();
             stopAutoRefresh();
         } finally {
             isLoadingTopology = false;
             setLoading(false);
         }
     }
+
+    function refreshLivePanels() {
+        networkStatusPanels.refreshAll();
+        stpPanel.refresh();
+        healthPanel.refresh();
+        blockedIpsPanel.refresh();
+    }
+
+    function notifyConnectionChange() {
+        window.dispatchEvent(new CustomEvent('gestordered:network-connection', {
+            detail: {
+                connected: Boolean(currentServer),
+                serverUrl: currentServer
+            }
+        }));
+    }
+
+    window.addEventListener('gestordered:refresh-live-network', () => {
+        if (!currentServer) {
+            return;
+        }
+
+        loadTopology();
+    });
+
+    window.gestorderedNetwork = {
+        isConnected: () => Boolean(currentServer),
+        getServerUrl: () => currentServer,
+        refresh: () => {
+            if (currentServer) {
+                loadTopology();
+            }
+        }
+    };
 
     function startAutoRefresh() {
         stopAutoRefresh();

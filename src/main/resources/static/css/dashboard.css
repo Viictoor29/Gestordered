@@ -435,8 +435,102 @@ button {
     gap: 16px;
 }
 
+.topology-live-actions {
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    background: #ffffff;
+    display: grid;
+    gap: 16px;
+    margin-top: 20px;
+    padding: 16px;
+}
+
+.topology-live-grid {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) minmax(220px, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.topology-apply-device {
+    border-top: 1px solid #dbe3ef;
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+    padding-top: 14px;
+}
+
+.topology-live-actions .topology-field {
+    color: #1e293b;
+    display: grid;
+    gap: 7px;
+    font-size: 0.82rem;
+    font-weight: 900;
+}
+
 .topology-field input {
     background: #ffffff;
+}
+
+.topology-live-actions .topology-field input {
+    width: 100%;
+    min-height: 42px;
+    margin: 0;
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    color: #0f172a;
+    font: inherit;
+    padding: 9px 11px;
+}
+
+.topology-live-actions .topology-field input:focus {
+    outline: none;
+    border-color: #D4AF37;
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16);
+}
+
+.topology-live-actions .btn-panel {
+    min-height: 42px;
+    white-space: nowrap;
+}
+
+.topology-live-actions .btn-panel.is-disabled-live-action,
+.topology-db-actions .btn-panel.is-disabled-live-action {
+    filter: grayscale(0.15);
+}
+
+.topology-action-feedback {
+    align-self: center;
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    color: #334155;
+    display: inline-flex;
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-left: 8px;
+    max-width: 320px;
+    padding: 8px 10px;
+    vertical-align: middle;
+}
+
+.topology-action-feedback.is-success {
+    background: #ecfdf3;
+    border-color: rgba(22, 163, 74, 0.28);
+    color: #166534;
+}
+
+.topology-action-feedback.is-error {
+    background: #fff1f3;
+    border-color: rgba(220, 38, 38, 0.28);
+    color: #991b1b;
+}
+
+.topology-action-feedback.is-pending {
+    background: #fffbeb;
+    border-color: rgba(212, 175, 55, 0.32);
+    color: #7c5f10;
 }
 
 .topology-file-field {
@@ -458,6 +552,11 @@ button {
     place-items: center;
     text-align: center;
     gap: 6px;
+}
+
+.topology-live-actions .topology-file-drop {
+    min-height: 96px;
+    padding: 14px;
 }
 
 .topology-file-drop:hover {
@@ -551,13 +650,13 @@ button {
 
 .topology-db-item .role-request-actions {
     display: grid;
-    grid-template-columns: repeat(3, 160px);
+    grid-template-columns: repeat(4, 150px);
     align-items: stretch;
     justify-content: flex-end;
 }
 
 .topology-db-item .role-request-actions .btn-panel {
-    width: 160px;
+    width: 150px;
     height: 44px;
     min-height: 44px;
     padding-inline: 8px;
@@ -2943,7 +3042,9 @@ button {
     .role-request-filters,
     .role-request-data,
     .operators-layout,
-    .topologies-layout {
+    .topologies-layout,
+    .topology-live-grid,
+    .topology-apply-device {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -2984,6 +3085,8 @@ button {
     .role-request-data,
     .operators-layout,
     .topologies-layout,
+    .topology-live-grid,
+    .topology-apply-device,
     .permission-actions {
         grid-template-columns: 1fr;
     }

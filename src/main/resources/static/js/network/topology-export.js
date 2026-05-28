@@ -14,7 +14,7 @@ export function initTopologyExportActions({ getServerUrl }) {
         }
 
         button.dataset.bound = 'true';
-        button?.addEventListener('click', () => {
+        button.addEventListener('click', () => {
             currentButton = button;
             currentStatus = status;
 

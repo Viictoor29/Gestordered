@@ -8,7 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/dashboard.css?v=20260523-split-css">
-    <script type="module" src="/js/network-dashboard.js?v=20260528-edge-actions" defer></script>
+    <script type="module" src="/js/network-dashboard.js?v=20260528-live-session" defer></script>
+    <script type="module" src="/js/admin-topologies.js?v=20260528-live-session" defer></script>
 </head>
 <body class="dashboard-page">
     <div class="dashboard-shell">
@@ -715,6 +716,7 @@
 
                     <p class="account-request-feedback is-success" th:if="${topologySuccess}" th:text="${topologySuccess}"></p>
                     <p class="account-request-feedback is-error" th:if="${topologyError}" th:text="${topologyError}"></p>
+                    <p class="account-request-feedback" data-admin-topology-feedback hidden></p>
 
                     <div class="topologies-layout">
                         <section class="topology-upload-section">
@@ -791,6 +793,13 @@
                                             Descargar JSON
                                         </a>
                                         <button type="button"
+                                                class="btn-panel"
+                                                data-action="apply-db-topology"
+                                                th:data-topology-name="${topology.name}">
+                                            <i class="fas fa-play"></i>
+                                            Importar
+                                        </button>
+                                        <button type="button"
                                                 class="btn-panel btn-panel-danger"
                                                 data-action="open-topology-delete"
                                                 th:data-delete-action="@{/dashboard/topologies/{id}/delete(id=${topology.id})}"
@@ -809,6 +818,49 @@
                             </div>
                         </section>
                     </div>
+
+                    <section class="topology-live-actions" data-admin-topology-actions>
+                        <div class="profile-section-heading">
+                            <span><i class="fas fa-network-wired"></i></span>
+                            <div>
+                                <p>Topologia activa</p>
+                                <h3>Acciones sobre la red</h3>
+                            </div>
+                        </div>
+                        <div class="topology-live-grid">
+                            <label class="topology-field">
+                                Servidor API
+                                <input type="text" data-admin-topology-server placeholder="Ej. 192.168.56.104:8080" autocomplete="off">
+                            </label>
+                            <label class="topology-field">
+                                Nombre para BD
+                                <input type="text" data-save-current-name placeholder="Nombre de la topologia" minlength="3" maxlength="80">
+                            </label>
+                            <label class="topology-field">
+                                Descripcion
+                                <input type="text" data-save-current-description placeholder="Descripcion breve" maxlength="240">
+                            </label>
+                            <button type="button" class="btn-panel" data-action="save-current-topology">
+                                <i class="fas fa-database"></i>
+                                Guardar activa en BD
+                            </button>
+                        </div>
+                        <div class="topology-apply-device">
+                            <div class="topology-file-field">
+                                <span>Importar desde dispositivo</span>
+                                <label class="topology-file-drop">
+                                    <input type="file" accept="application/json,.json" data-apply-topology-file>
+                                    <i class="fas fa-file-import"></i>
+                                    <strong data-apply-topology-file-name>Seleccionar JSON</strong>
+                                    <small>Tambien puedes arrastrar y soltar el archivo para aplicarlo en la red.</small>
+                                </label>
+                            </div>
+                            <button type="button" class="btn-panel btn-panel-secondary" data-action="apply-device-topology">
+                                <i class="fas fa-play"></i>
+                                Importar archivo en la red
+                            </button>
+                        </div>
+                    </section>
                 </article>
 
                 <div class="account-request-modal" id="topology-json-modal" aria-hidden="true">
