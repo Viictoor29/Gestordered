@@ -1909,6 +1909,94 @@ button {
     background: #fffbeb;
 }
 
+.topology-refresh-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.topology-refresh-button:disabled:hover {
+    border-color: #dbe3ef;
+    background: #ffffff;
+}
+
+.topology-export-status {
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 900;
+    width: 100%;
+    text-align: right;
+}
+
+.topology-export-status.is-loading {
+    color: #1e3c72;
+}
+
+.topology-export-status.is-success {
+    color: #15803d;
+}
+
+.topology-export-status.is-error {
+    color: #b42318;
+}
+
+.topology-export-footer {
+    border-top: 1px solid #dbe3ef;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 12px;
+}
+
+.topology-export-dialog {
+    max-width: min(520px, calc(100vw - 32px));
+}
+
+.topology-export-form {
+    display: grid;
+    gap: 14px;
+}
+
+.topology-export-form label {
+    color: #1e293b;
+    font-size: 0.9rem;
+    font-weight: 900;
+}
+
+.topology-export-form input {
+    width: 100%;
+    min-height: 42px;
+    margin-top: 8px;
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    color: #0f172a;
+    font: inherit;
+    padding: 10px 12px;
+}
+
+.topology-export-form input:focus {
+    outline: none;
+    border-color: #D4AF37;
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16);
+}
+
+.topology-export-modal-feedback {
+    color: #64748b;
+    font-size: 0.84rem;
+    font-weight: 900;
+    margin: 0;
+    min-height: 18px;
+}
+
+.topology-export-modal-feedback.is-loading {
+    color: #1e3c72;
+}
+
+.topology-export-modal-feedback.is-error {
+    color: #b42318;
+}
+
 .topology-workspace {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 320px;

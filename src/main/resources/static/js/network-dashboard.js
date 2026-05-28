@@ -2,6 +2,7 @@ import { initNetworkStatusPanels } from './network/status-panels.js';
 import { initBlockedIpsPanel } from './network/blocked-ips-panel.js';
 import { initHealthPanel } from './network/health-panel.js';
 import { initStpPanel } from './network/stp-panel.js';
+import { initTopologyExportActions } from './network/topology-export.js';
 import { initTrafficPanel } from './network/traffic-panel.js';
 import {
     bindEdgeDegradationForm,
@@ -59,6 +60,9 @@ import {
         onTrafficComplete: () => healthPanel.refresh()
     });
     const blockedIpsPanel = initBlockedIpsPanel({
+        getServerUrl: () => currentServer
+    });
+    const topologyExportActions = initTopologyExportActions({
         getServerUrl: () => currentServer
     });
     const contextualActionContext = {
@@ -298,11 +302,19 @@ import {
                     ${renderOverviewDetail(summary)}
                 </aside>
             </div>
+            <div class="topology-export-footer" data-topology-export-actions>
+                <button type="button" class="topology-refresh-button" data-topology-export="/api/topology/export">
+                    <i class="fas fa-download"></i>
+                    Exportar topologia
+                </button>
+                <span class="topology-export-status" data-topology-export-status></span>
+            </div>
         `;
 
         stage.style.setProperty('--topology-panel-height', `${panelHeight}px`);
         bindTopologySelection(nodes, edges);
         bindManualRefresh();
+        topologyExportActions.bind();
     }
 
     function getTopologyPanelHeight(nodes, edges) {
