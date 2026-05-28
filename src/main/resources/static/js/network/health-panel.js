@@ -1,6 +1,7 @@
 export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }) {
     const refreshButton = document.querySelector('[data-health-refresh]');
     const body = document.querySelector('[data-health-body]');
+    const flowModal = createFlowModal();
 
     let refreshTimer = null;
     let isLoading = false;
@@ -11,6 +12,12 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
             const portTab = event.target.closest('[data-health-port-tab]');
             if (portTab) {
                 selectPortTab(portTab);
+                return;
+            }
+
+            const flowButton = event.target.closest('[data-health-flows]');
+            if (flowButton) {
+                openSwitchFlows(flowButton.dataset.healthFlows, flowButton.dataset.healthFlowCount);
             }
         });
     }
@@ -88,6 +95,7 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
             <dl class="network-status-details health-details">
                 ${detailRow('Ultima lectura', updatedAt)}
                 ${detailRow('Uptime controlador', formatDuration(summary.controller_uptime_seconds ?? health.controller_uptime_seconds))}
+                ${detailRow('Flujos totales', summary.flows?.total)}
                 ${detailRow('Enlaces en inventario', summary.links?.total_inventory)}
                 ${detailRow('Enlaces habilitados', summary.links?.enabled)}
                 ${detailRow('Enlaces descubiertos', summary.links?.discovered)}
@@ -115,6 +123,7 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
                 </div>
 
                 <dl class="health-switch-stats">
+                    ${detailRow('Flujos', sw.flow_count ?? 0)}
                     ${detailRow('Trafico', formatTraffic(traffic))}
                     ${detailRow('RX errores', totals.rx_errors ?? 0)}
                     ${detailRow('TX errores', totals.tx_errors ?? 0)}
@@ -123,6 +132,13 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
                 </dl>
 
                 ${renderPortTabs(sw.dpid || 'switch', ports)}
+
+                <div class="health-switch-actions">
+                    <button type="button" class="contextual-action-button" data-health-flows="${escapeHtml(sw.dpid || '')}" data-health-flow-count="${escapeHtml(sw.flow_count ?? 0)}">
+                        <i class="fas fa-list"></i>
+                        Flujos
+                    </button>
+                </div>
             </article>
         `;
     }
@@ -212,6 +228,55 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
         });
     }
 
+    async function openSwitchFlows(dpid, expectedCount = 0) {
+        if (!dpid || !flowModal) {
+            return;
+        }
+
+        if (!getActiveServerUrl()) {
+            setFlowModalMessage('Conecta primero con la API.');
+            showFlowModal(dpid, expectedCount);
+            return;
+        }
+
+        setFlowModalMessage('Cargando flujos...');
+        showFlowModal(dpid, expectedCount);
+
+        try {
+            const payload = await fetchJson(buildApiUrl(`/api/switch/${encodeURIComponent(dpid)}/flows`));
+            renderFlowModalContent(payload.data || payload);
+        } catch (error) {
+            setFlowModalMessage(error.message || 'No se pudieron cargar los flujos.', 'error');
+        }
+    }
+
+    function showFlowModal(dpid, expectedCount) {
+        flowModal.title.textContent = `Flujos del switch ${dpid}`;
+        flowModal.subtitle.textContent = `${Number(expectedCount || 0)} flujo(s) registrados`;
+        flowModal.root.classList.add('is-open');
+        flowModal.root.setAttribute('aria-hidden', 'false');
+    }
+
+    function setFlowModalMessage(text, type = 'info') {
+        flowModal.content.innerHTML = `<p class="health-flow-empty is-${escapeHtml(type)}">${escapeHtml(text)}</p>`;
+    }
+
+    function renderFlowModalContent(data) {
+        const flows = extractFlows(data);
+        flowModal.subtitle.textContent = `${flows.length} flujo(s) registrados`;
+
+        if (!flows.length) {
+            setFlowModalMessage('No hay reglas de flujo en este switch.');
+            return;
+        }
+
+        flowModal.content.innerHTML = `
+            <div class="health-flow-minimal-list">
+                ${flows.map(renderMinimalFlow).join('')}
+            </div>
+        `;
+    }
+
     async function fetchJson(url) {
         const response = await fetch(url, {
             headers: { Accept: 'application/json' },
@@ -260,6 +325,112 @@ function renderHealthKpi(label, value, icon, extraClass = '') {
             <strong>${escapeHtml(value ?? 'N/D')}</strong>
         </span>
     `;
+}
+
+function renderMinimalFlow(flow, index) {
+    return `
+        <article class="health-flow-minimal-row">
+            <div>
+                <strong>Flujo ${index + 1}</strong>
+                <span>Prioridad: ${escapeHtml(flow.priority ?? 'N/D')}</span>
+            </div>
+            <dl>
+                ${detailRow('Coincidencias', formatCompactValue(flow.match) || 'Cualquiera')}
+                ${detailRow('Acciones', formatCompactValue(flow.actions || flow.instructions || flow.action) || 'Sin acciones')}
+                ${detailRow('Paquetes', flow.packet_count ?? flow.packets ?? 0)}
+                ${detailRow('Bytes', flow.byte_count ?? flow.bytes ?? 0)}
+            </dl>
+        </article>
+    `;
+}
+
+function extractFlows(value) {
+    if (Array.isArray(value)) {
+        return value;
+    }
+
+    if (!value || typeof value !== 'object') {
+        return [];
+    }
+
+    if (Array.isArray(value.flows)) {
+        return value.flows;
+    }
+
+    if (Array.isArray(value.flow_stats)) {
+        return value.flow_stats;
+    }
+
+    if (value.data) {
+        return extractFlows(value.data);
+    }
+
+    return [];
+}
+
+function formatCompactValue(value) {
+    if (value === undefined || value === null || value === '') {
+        return '';
+    }
+
+    if (Array.isArray(value)) {
+        return value.map(formatCompactValue).filter(Boolean).join(' | ');
+    }
+
+    if (typeof value === 'object') {
+        return Object.entries(value)
+            .map(([key, item]) => `${key}: ${formatCompactValue(item)}`)
+            .join(', ');
+    }
+
+    return String(value);
+}
+
+function createFlowModal() {
+    const root = document.createElement('div');
+    root.className = 'account-request-modal health-flow-modal';
+    root.setAttribute('aria-hidden', 'true');
+    root.innerHTML = `
+        <section class="account-request-dialog health-flow-dialog" role="dialog" aria-modal="true" aria-labelledby="health-flow-title">
+            <div class="panel-header">
+                <div>
+                    <p>Reglas de flujo</p>
+                    <h2 id="health-flow-title">Flujos del switch</h2>
+                    <span class="health-flow-subtitle" data-health-flow-subtitle></span>
+                </div>
+                <button type="button" class="modal-close-button" data-health-flow-close aria-label="Cerrar flujos">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <div class="health-flow-modal-content" data-health-flow-content></div>
+        </section>
+    `;
+
+    document.body.appendChild(root);
+
+    const close = () => {
+        root.classList.remove('is-open');
+        root.setAttribute('aria-hidden', 'true');
+    };
+
+    root.addEventListener('click', event => {
+        if (event.target === root || event.target.closest('[data-health-flow-close]')) {
+            close();
+        }
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && root.classList.contains('is-open')) {
+            close();
+        }
+    });
+
+    return {
+        root,
+        title: root.querySelector('#health-flow-title'),
+        subtitle: root.querySelector('[data-health-flow-subtitle]'),
+        content: root.querySelector('[data-health-flow-content]')
+    };
 }
 
 function renderPlaceholder(type, text) {

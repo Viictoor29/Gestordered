@@ -1251,8 +1251,7 @@ button {
 }
 
 .health-switch-header,
-.health-port-main,
-.flow-row-main {
+.health-port-main {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -1394,92 +1393,125 @@ button {
     margin: 9px 0;
 }
 
-.health-flow-list {
+.health-switch-actions {
     margin-top: 12px;
 }
 
-.flow-table {
-    display: grid;
-    gap: 10px;
+.health-flow-dialog {
+    max-width: min(900px, calc(100vw - 32px));
 }
 
-.flow-row {
-    border: 1px solid #dbe3ef;
-    border-radius: 9px;
-    background: #f8fafc;
-    padding: 12px;
+.health-flow-dialog .panel-header {
+    align-items: flex-start;
+    margin-bottom: 12px;
 }
 
-.flow-row-main {
-    margin-bottom: 9px;
+.health-flow-dialog .panel-header p {
+    color: #1e3c72;
 }
 
-.flow-row-main strong {
+.health-flow-dialog .panel-header h2 {
     color: #172554;
-    font-size: 0.9rem;
-    font-weight: 900;
 }
 
-.flow-row-main p {
-    color: #475569;
-    font-size: 0.82rem;
-    font-weight: 800;
-    line-height: 1.4;
-    margin: 3px 0 0;
-    overflow-wrap: anywhere;
+.health-flow-dialog .modal-close-button {
+    flex: 0 0 auto;
+    margin-left: auto;
 }
 
-.flow-row-main span {
-    color: #475569;
+.health-flow-dialog .modal-close-button i {
+    color: #1e3c72;
+}
+
+.health-flow-subtitle {
+    color: #D4AF37;
+    display: inline-block;
     font-size: 0.8rem;
     font-weight: 800;
-    white-space: nowrap;
+    margin-top: 4px;
 }
 
-.flow-readable-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.flow-readable-grid section {
-    border: 1px solid #e2e8f0;
+.health-flow-modal-content {
+    background: #f8fafc;
+    border: 1px solid #dbe3ef;
     border-radius: 8px;
-    background: #ffffff;
-    min-width: 0;
+    color: #0f172a;
+    margin: 14px 0 0;
+    max-height: min(60vh, 560px);
+    overflow: auto;
     padding: 10px;
 }
 
-.flow-readable-grid h5 {
-    color: #64748b;
-    font-size: 0.7rem;
+.health-flow-minimal-list {
+    display: grid;
+    gap: 8px;
+}
+
+.health-flow-minimal-row {
+    border: 1px solid #dbe3ef;
+    border-left: 4px solid #D4AF37;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 10px;
+}
+
+.health-flow-minimal-row > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.health-flow-minimal-row strong,
+.health-flow-minimal-row span {
+    font-size: 0.82rem;
     font-weight: 900;
-    margin: 0 0 8px;
+}
+
+.health-flow-minimal-row strong {
+    color: #1e3c72;
+}
+
+.health-flow-minimal-row span {
+    color: #C9A227;
+}
+
+.health-flow-minimal-row dl {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+}
+
+.health-flow-minimal-row dl div {
+    display: grid;
+    gap: 2px;
+}
+
+.health-flow-minimal-row dt {
+    color: #1e3c72;
+    font-size: 0.68rem;
+    font-weight: 900;
     text-transform: uppercase;
 }
 
-.flow-chip-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-}
-
-.flow-chip {
-    border: 1px solid #dbe3ef;
-    border-radius: 999px;
-    background: #f8fafc;
-    color: #172554;
-    display: inline-flex;
-    max-width: 100%;
-    padding: 6px 9px;
+.health-flow-minimal-row dd {
+    color: #0f172a;
+    font-family: Consolas, "Liberation Mono", monospace;
     font-size: 0.78rem;
-    font-weight: 900;
+    margin: 0;
     overflow-wrap: anywhere;
 }
 
-.flow-chip.is-muted {
-    color: #64748b;
+.health-flow-empty {
+    color: #1e3c72;
+    font-size: 0.86rem;
+    font-weight: 900;
+    margin: 0;
+    padding: 6px;
+}
+
+.health-flow-empty.is-error {
+    color: #b42318;
 }
 
 .health-inline-notice {
@@ -2930,7 +2962,6 @@ button {
     .health-summary-grid,
     .health-switch-stats,
     .health-port-data,
-    .flow-readable-grid,
     .stp-switch-details,
     .traffic-form,
     .traffic-form-compact,
@@ -2939,10 +2970,9 @@ button {
         grid-template-columns: 1fr;
     }
 
-    .health-switch-header,
-    .health-port-main,
-    .flow-row-main,
-    .traffic-result-header {
+.health-switch-header,
+.health-port-main,
+.traffic-result-header {
         align-items: stretch;
         flex-direction: column;
     }
