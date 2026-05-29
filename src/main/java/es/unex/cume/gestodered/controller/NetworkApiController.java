@@ -218,6 +218,36 @@ public class NetworkApiController {
         return networkApiClient.absolute(serverUrl, HttpMethod.POST, "/api/mininet/topology/apply", body);
     }
 
+    @PostMapping({
+            "/api/admin/mininet/hosts",
+            "/api/admin/mininet/switches",
+            "/api/admin/mininet/links",
+            "/api/admin/mininet/links/add",
+            "/api/admin/mininet/links/delete"
+    })
+    public ResponseEntity<String> postAdminMininetOperationFrom(
+            @RequestParam String serverUrl,
+            @RequestBody(required = false) String body,
+            Authentication authentication,
+            HttpServletRequest request) {
+        requireRole(authentication, ADMIN_ROLES);
+        return networkApiClient.absolute(serverUrl, HttpMethod.POST, adminMininetPath(request), body);
+    }
+
+    @DeleteMapping({
+            "/api/admin/mininet/links",
+            "/api/admin/mininet/hosts/{name}",
+            "/api/admin/mininet/switches/{name}"
+    })
+    public ResponseEntity<String> deleteAdminMininetOperationFrom(
+            @RequestParam String serverUrl,
+            @RequestBody(required = false) String body,
+            Authentication authentication,
+            HttpServletRequest request) {
+        requireRole(authentication, ADMIN_ROLES);
+        return networkApiClient.absolute(serverUrl, HttpMethod.DELETE, adminMininetPath(request), body);
+    }
+
     @PostMapping("/api/admin/ryu/controller/runtime/reset")
     public ResponseEntity<String> resetRyuRuntimeFrom(
             @RequestParam String serverUrl,
@@ -270,5 +300,9 @@ public class NetworkApiController {
         if (!hasRole) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos para usar esta funcion.");
         }
+    }
+
+    private String adminMininetPath(HttpServletRequest request) {
+        return request.getRequestURI().replaceFirst("^/api/admin", "/api");
     }
 }

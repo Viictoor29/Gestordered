@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/css/dashboard.css?v=20260523-split-css">
     <script type="module" src="/js/network-dashboard.js?v=20260529-draggable-topology" defer></script>
     <script type="module" src="/js/admin-topologies.js?v=20260529-draggable-topology" defer></script>
+    <script type="module" src="/js/admin-live-inventory.js?v=20260529-admin-crud" defer></script>
 </head>
 <body class="dashboard-page">
     <div class="dashboard-shell">
@@ -90,7 +91,9 @@
                         </span>
                     </div>
 
-                    <form class="server-form dashboard-server-form" data-server-form>
+                    <form class="server-form dashboard-server-form"
+                          data-server-form
+                          th:attr="data-admin-network-view=${isAdmin}">
                         <label>
                             IP del servidor
                             <input type="text" name="serverIp" placeholder="Ej. 192.168.56.104:8080" autocomplete="off" data-server-input>
@@ -184,6 +187,45 @@
                             <i class="fas fa-network-wired"></i>
                             <h3>Sin datos cargados todavia</h3>
                             <p>Introduce el servidor de la API y pulsa conectar para ver la topología.</p>
+                        </div>
+                    </div>
+
+                    <div class="topology-live-inventory" data-admin-live-inventory th:if="${isAdmin}">
+                        <div class="topology-live-inventory-header">
+                            <div>
+                                <p>Inventario vivo</p>
+                                <h4>Añadir hosts, switches y enlaces</h4>
+                            </div>
+                            <span data-admin-inventory-feedback hidden></span>
+                        </div>
+
+                        <div class="topology-inventory-grid">
+                            <form class="topology-inventory-form" data-inventory-form="add-host">
+                                <h5><i class="fas fa-desktop"></i> Añadir host</h5>
+                                <label>Nombre <input type="text" name="name" placeholder="h3" required></label>
+                                <label>IPv4 <input type="text" name="ip" placeholder="10.0.0.3/8"></label>
+                                <label>MAC <input type="text" name="mac" placeholder="00:00:00:00:00:03"></label>
+                                <label>Switch <input type="text" name="switch" placeholder="s1"></label>
+                                <label>Puerto switch <input type="number" name="switch_port" min="1" placeholder="3"></label>
+                                <button type="submit" class="btn-panel"><i class="fas fa-plus"></i> Añadir host</button>
+                            </form>
+
+                            <form class="topology-inventory-form" data-inventory-form="add-switch">
+                                <h5><i class="fas fa-network-wired"></i> Añadir switch</h5>
+                                <label>Nombre <input type="text" name="name" placeholder="s3" required></label>
+                                <label>DPID <input type="text" name="dpid" placeholder="3"></label>
+                                <label>Protocolos <input type="text" name="protocols" value="OpenFlow13"></label>
+                                <button type="submit" class="btn-panel"><i class="fas fa-plus"></i> Añadir switch</button>
+                            </form>
+
+                            <form class="topology-inventory-form" data-inventory-form="add-link">
+                                <h5><i class="fas fa-link"></i> Añadir enlace</h5>
+                                <label>Nodo 1 <input type="text" name="node1" placeholder="s1" required></label>
+                                <label>Nodo 2 <input type="text" name="node2" placeholder="s2" required></label>
+                                <label>Puerto nodo 1 <input type="number" name="port1" min="1"></label>
+                                <label>Puerto nodo 2 <input type="number" name="port2" min="1"></label>
+                                <button type="submit" class="btn-panel"><i class="fas fa-plus"></i> Añadir enlace</button>
+                            </form>
                         </div>
                     </div>
 
@@ -359,6 +401,38 @@
                     </div>
                 </article>
             </section>
+
+            <div class="account-request-modal" id="network-delete-modal" aria-hidden="true" th:if="${isAdmin}">
+                <div class="account-request-backdrop" data-action="close-network-delete"></div>
+                <section class="account-request-dialog request-status-dialog" role="dialog" aria-modal="true" aria-labelledby="network-delete-title">
+                    <div class="panel-header">
+                        <div>
+                            <p>Confirmacion requerida</p>
+                            <h2 id="network-delete-title">Borrar elemento de red</h2>
+                        </div>
+                        <button type="button" class="modal-close-button" data-action="close-network-delete" aria-label="Cerrar borrado">
+                            <i class="fas fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <form class="operator-request-form" data-network-delete-form>
+                        <p class="reject-modal-target" data-network-delete-summary>Selecciona un elemento de la topologia.</p>
+                        <p class="account-request-note">Esta accion modifica Mininet en vivo. Escribe CONFIRMAR para continuar.</p>
+                        <label>
+                            Confirmacion
+                            <input type="text" name="confirmation" autocomplete="off" placeholder="CONFIRMAR" required>
+                        </label>
+                        <p class="account-request-feedback" data-network-delete-feedback></p>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-panel btn-panel-secondary" data-action="close-network-delete">Cancelar</button>
+                            <button type="submit" class="btn-panel btn-panel-danger">
+                                <i class="fas fa-trash"></i>
+                                Borrar definitivamente
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            </div>
 
             <section id="profile" class="dashboard-content-grid" th:if="${activeSection == 'profile'}">
                 <article class="dashboard-card panel-card profile-card">
@@ -860,6 +934,7 @@
                                 Importar archivo en la red
                             </button>
                         </div>
+
                     </section>
                 </article>
 

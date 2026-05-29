@@ -22,12 +22,14 @@ import {
     const refreshIntervalMs = 60000;
     const usesGuestProxy = form.dataset.publicNetworkView === 'true';
     const readOnlyTopology = form.dataset.readOnlyNetworkView === 'true';
+    const canManageLiveInventory = form.dataset.adminNetworkView === 'true';
     const requiresMininetConnection = form.dataset.requireMininetConnection === 'true'
         || Boolean(document.querySelector('[data-mininet-status-body]'));
     let refreshTimer = null;
     let isLoadingTopology = false;
     let currentServer = '';
     let lastUpdatedAt = null;
+    let pendingDeleteRequest = null;
 
     if (!form || !input || !button || !status || !stage) {
         return;
@@ -81,6 +83,7 @@ import {
     };
 
     bindRoleRequestForms();
+    bindNetworkDeleteModal();
 
     function normalizeServer(value) {
         const rawValue = value.trim().replace(/\/+$/, '');
@@ -825,6 +828,7 @@ import {
             if (!readOnlyTopology) {
                 bindNodeIpTrafficActions(detail, node, contextualActionContext);
             }
+            bindLiveInventoryDeleteAction(detail, buildNodeDeleteRequest(node));
             return;
         }
 
@@ -834,6 +838,7 @@ import {
             bindEdgeStateActions(detail, edge, contextualActionContext);
             bindEdgeDegradationForm(detail, edge, contextualActionContext);
         }
+        bindLiveInventoryDeleteAction(detail, buildEdgeDeleteRequest(edge));
     }
 
     function renderNodeDetail(node, edges = []) {
@@ -862,6 +867,7 @@ import {
                 ${isSwitch ? '' : statusBadge(isNodeBlocked(node) ? 'Bloqueado' : 'Permitido', isNodeBlocked(node) ? 'is-danger' : 'is-success')}
             </div>
             ${readOnlyTopology ? '' : renderNodeIpTrafficControl(node)}
+            ${renderLiveInventoryDeleteControl(isSwitch ? 'switch' : 'host', title)}
             ${detailSection('Identidad', [
                 ['ID', node.id],
                 ['Tipo', formatType(node.type)],
@@ -956,6 +962,7 @@ import {
             </div>
             ${readOnlyTopology ? '' : renderEdgeStateControl(edge)}
             ${readOnlyTopology ? '' : renderEdgeDegradationControl(edge)}
+            ${renderLiveInventoryDeleteControl('link', title)}
             ${detailSection('Extremos', endpointRows)}
             ${detailSection('Estado operativo', [
                 ['Estado', formatState(edge.state)],
@@ -969,6 +976,191 @@ import {
             ${detailSection('STP', linkStpRows)}
             ${renderExtraSection(edge, ['type', 'source-h', 'target-s', 'source', 'target', 'mac', 'src_port', 'dst_port', 's-port', 'src_iface', 'dst_iface', 's-iface', 'state', 'enabled', 'forwarding', 'discovered', 'inventory_state', 'manual_disabled', 'admin_state', 'blocked_ipv4', 'stp_state', 'stp_blocked', 'stp', 'tc_sw_port', 'src_tc', 'dst_tc', 'src_degradation', 'dst_degradation', 'degradation-link'])}
         `;
+    }
+
+    function renderLiveInventoryDeleteControl(type, label) {
+        if (!canManageLiveInventory) {
+            return '';
+        }
+
+        const labels = {
+            host: 'Borrar host',
+            switch: 'Borrar switch',
+            link: 'Borrar enlace'
+        };
+
+        return `
+            <section class="detail-section live-inventory-delete-section">
+                <h4>Inventario vivo</h4>
+                <button type="button"
+                        class="contextual-action-button is-danger live-inventory-delete-button"
+                        data-live-delete-trigger>
+                    <i class="fas fa-trash"></i>
+                    ${escapeHtml(labels[type] || 'Borrar elemento')}
+                </button>
+                <p class="edge-degradation-note">Vas a modificar Mininet en vivo: ${escapeHtml(label || 'elemento seleccionado')}.</p>
+            </section>
+        `;
+    }
+
+    function bindLiveInventoryDeleteAction(detail, request) {
+        if (!canManageLiveInventory || !request) {
+            return;
+        }
+
+        const button = detail.querySelector('[data-live-delete-trigger]');
+        if (!button) {
+            return;
+        }
+
+        button.addEventListener('click', () => openNetworkDeleteModal(request));
+    }
+
+    function buildNodeDeleteRequest(node) {
+        if (!node || !node.id) {
+            return null;
+        }
+
+        const type = node.type === 'switch' ? 'switch' : 'host';
+        const name = normalizeNodeName(node.name || node.id);
+        return {
+            method: 'DELETE',
+            path: `/api/admin/mininet/${type === 'switch' ? 'switches' : 'hosts'}/${encodeURIComponent(name)}`,
+            body: {},
+            label: `${type === 'switch' ? 'switch' : 'host'} ${name}`,
+            successMessage: `${type === 'switch' ? 'Switch' : 'Host'} ${name} eliminado correctamente.`
+        };
+    }
+
+    function buildEdgeDeleteRequest(edge) {
+        if (!edge) {
+            return null;
+        }
+
+        const isHostLink = edge.type === 'host-link';
+        const body = isHostLink
+            ? {
+                node1: normalizeNodeName(edge['source-h'] || edge.source),
+                node2: normalizeNodeName(edge['target-s'] || edge.target),
+                port2: numberOrUndefined(edge['s-port'] ?? edge.dst_port)
+            }
+            : {
+                node1: normalizeNodeName(edge.source || edge['source-s']),
+                node2: normalizeNodeName(edge.target || edge['target-s']),
+                port1: numberOrUndefined(edge.src_port),
+                port2: numberOrUndefined(edge.dst_port)
+            };
+
+        return {
+            method: 'DELETE',
+            path: '/api/admin/mininet/links',
+            body: compactObject(body),
+            label: `enlace ${body.node1 || '?'} - ${body.node2 || '?'}`,
+            successMessage: `Enlace ${body.node1 || '?'} - ${body.node2 || '?'} eliminado correctamente.`
+        };
+    }
+
+    function bindNetworkDeleteModal() {
+        const modal = document.getElementById('network-delete-modal');
+        const formElement = modal?.querySelector('[data-network-delete-form]');
+        const summary = modal?.querySelector('[data-network-delete-summary]');
+        const feedback = modal?.querySelector('[data-network-delete-feedback]');
+
+        if (!modal || !formElement || !summary) {
+            return;
+        }
+
+        const closeModal = () => {
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            pendingDeleteRequest = null;
+            formElement.reset();
+            if (feedback) {
+                feedback.textContent = '';
+                feedback.classList.remove('is-error', 'is-success', 'is-pending');
+            }
+        };
+
+        modal.querySelectorAll('[data-action="close-network-delete"]').forEach(button => {
+            button.addEventListener('click', closeModal);
+        });
+
+        formElement.addEventListener('submit', event => {
+            event.preventDefault();
+            submitNetworkDelete(formElement, feedback, closeModal);
+        });
+    }
+
+    function openNetworkDeleteModal(request) {
+        const modal = document.getElementById('network-delete-modal');
+        const summary = modal?.querySelector('[data-network-delete-summary]');
+        const input = modal?.querySelector('input[name="confirmation"]');
+
+        if (!modal || !summary) {
+            return;
+        }
+
+        pendingDeleteRequest = request;
+        summary.textContent = `Vas a borrar ${request.label}. Esta accion puede desconectar hosts o eliminar enlaces asociados.`;
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        window.setTimeout(() => input?.focus(), 0);
+    }
+
+    async function submitNetworkDelete(formElement, feedback, closeModal) {
+        if (!pendingDeleteRequest) {
+            return;
+        }
+
+        const confirmation = new FormData(formElement).get('confirmation');
+        if (String(confirmation || '').trim() !== 'CONFIRMAR') {
+            setNetworkDeleteFeedback(feedback, 'Escribe CONFIRMAR para continuar.', 'is-error');
+            return;
+        }
+
+        try {
+            setNetworkDeleteFeedback(feedback, 'Borrando elemento en Mininet...', 'is-pending');
+            await sendLiveInventoryJson(pendingDeleteRequest.path, pendingDeleteRequest.method, pendingDeleteRequest.body);
+            setNetworkDeleteFeedback(feedback, pendingDeleteRequest.successMessage, 'is-success');
+            window.setTimeout(() => {
+                closeModal();
+                loadTopology({ manual: true });
+            }, 700);
+        } catch (error) {
+            setNetworkDeleteFeedback(feedback, error.message || 'No se pudo borrar el elemento.', 'is-error');
+        }
+    }
+
+    async function sendLiveInventoryJson(path, method, body) {
+        const response = await fetch(`${path}?serverUrl=${encodeURIComponent(toMininetUrl(currentServer))}`, {
+            method,
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(body || {})
+        });
+        const text = await response.text();
+        const payload = parseResponseJson(text);
+
+        if (!response.ok || payload.ok === false) {
+            throw new Error(payload.error || payload.message || text || `HTTP ${response.status}`);
+        }
+
+        return payload;
+    }
+
+    function setNetworkDeleteFeedback(feedback, message, className) {
+        if (!feedback) {
+            return;
+        }
+
+        feedback.textContent = message;
+        feedback.classList.remove('is-error', 'is-success', 'is-pending');
+        if (className) {
+            feedback.classList.add(className);
+        }
     }
 
     function renderEmptyDetail() {
@@ -1383,6 +1575,32 @@ import {
     function formatTc(edge, key) {
         const values = [edge.tc_sw_port?.[key], edge.src_tc?.[key], edge.dst_tc?.[key]].filter(value => value !== null && value !== undefined);
         return values.length ? values.join(' / ') : undefined;
+    }
+
+    function parseResponseJson(value) {
+        try {
+            return JSON.parse(value);
+        } catch (error) {
+            return {};
+        }
+    }
+
+    function compactObject(value) {
+        return Object.fromEntries(Object.entries(value)
+            .filter(([, child]) => child !== undefined && child !== null && child !== ''));
+    }
+
+    function normalizeNodeName(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
+    function numberOrUndefined(value) {
+        if (value === undefined || value === null || value === '') {
+            return undefined;
+        }
+
+        const number = Number(value);
+        return Number.isFinite(number) ? number : undefined;
     }
 
     function escapeHtml(value) {
