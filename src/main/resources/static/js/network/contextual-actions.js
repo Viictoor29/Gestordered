@@ -159,7 +159,7 @@ export function bindEdgeDegradationForm(detail, edge, context) {
 async function submitIpTrafficAction(ip, action, button, result, context) {
     const serverUrl = context.getServerUrl();
     if (!serverUrl) {
-        renderContextualMessage(result, 'error', 'Conecta primero con la API.');
+        showTopologyActionModal('Conecta primero con la API.', 'error');
         return;
     }
 
@@ -173,12 +173,14 @@ async function submitIpTrafficAction(ip, action, button, result, context) {
 
     try {
         await postJson(`${serverUrl}${path}`, { ip });
-        renderContextualMessage(result, 'success', action === 'unblock' ? 'IP desbloqueada.' : 'IP bloqueada.');
+        clearActionMessage(result);
+        showTopologyActionModal(action === 'unblock' ? 'IP desbloqueada.' : 'IP bloqueada.', 'success');
         context.refreshTopology();
         context.refreshHealth();
         context.refreshBlockedIps?.();
     } catch (error) {
-        renderContextualMessage(result, 'error', error.message || 'No se pudo gestionar la IP.');
+        clearActionMessage(result);
+        showTopologyActionModal(error.message || 'No se pudo gestionar la IP.', 'error');
     } finally {
         button.disabled = false;
         button.innerHTML = originalHtml;
@@ -188,7 +190,7 @@ async function submitIpTrafficAction(ip, action, button, result, context) {
 async function submitEdgeStateAction(actions, action, button, result, context) {
     const serverUrl = context.getServerUrl();
     if (!serverUrl) {
-        renderContextualMessage(result, 'error', 'Conecta primero con la API.');
+        showTopologyActionModal('Conecta primero con la API.', 'error');
         return;
     }
 
@@ -202,12 +204,14 @@ async function submitEdgeStateAction(actions, action, button, result, context) {
 
     try {
         await postJson(`${serverUrl}${operation.path}`, operation.body);
-        renderContextualMessage(result, 'success', action === 'enable' ? 'Enlace habilitado.' : 'Enlace deshabilitado.');
+        clearActionMessage(result);
+        showTopologyActionModal(action === 'enable' ? 'Enlace habilitado.' : 'Enlace deshabilitado.', 'success');
         context.refreshTopology();
         context.refreshStp();
         context.refreshHealth();
     } catch (error) {
-        renderContextualMessage(result, 'error', error.message || 'No se pudo cambiar el estado del enlace.');
+        clearActionMessage(result);
+        showTopologyActionModal(error.message || 'No se pudo cambiar el estado del enlace.', 'error');
     } finally {
         button.disabled = false;
         button.innerHTML = originalHtml;
@@ -217,7 +221,7 @@ async function submitEdgeStateAction(actions, action, button, result, context) {
 async function submitEdgeDegradation(form, result, button, context, forcedMetric = null) {
     const serverUrl = context.getServerUrl();
     if (!serverUrl) {
-        renderEdgeDegradationMessage(result, 'error', 'Conecta primero con la API.');
+        showTopologyActionModal('Conecta primero con la API.', 'error');
         return;
     }
 
@@ -235,12 +239,14 @@ async function submitEdgeDegradation(form, result, button, context, forcedMetric
     try {
         const operation = buildEdgeDegradationOperation(new FormData(form), forcedMetric);
         await postJson(`${serverUrl}${operation.path}`, operation.body);
-        renderEdgeDegradationResult(result, operation);
+        clearActionMessage(result);
+        showTopologyActionModal(buildEdgeDegradationSuccessMessage(operation), 'success');
         context.refreshTopology();
         context.refreshHealth();
         context.refreshStp();
     } catch (error) {
-        renderEdgeDegradationMessage(result, 'error', error.message || 'No se pudo aplicar la degradacion.');
+        clearActionMessage(result);
+        showTopologyActionModal(error.message || 'No se pudo aplicar la degradacion.', 'error');
     } finally {
         button.disabled = false;
         button.innerHTML = originalHtml;
@@ -406,18 +412,15 @@ async function postJson(url, body) {
     return payload;
 }
 
-function renderEdgeDegradationResult(target, operation) {
+function buildEdgeDegradationSuccessMessage(operation) {
     const message = operation.metric === 'clear'
         ? 'Degradacion limpiada.'
         : (operation.mode === 'host-link'
             ? `Valor aplicado al puerto: ${operation.appliedValue}.`
             : `Valor aplicado por extremo: ${operation.appliedValue}.`);
-    target.innerHTML = `
-        <div class="edge-degradation-feedback is-success">
-            <strong>${escapeHtml(message)}</strong>
-            ${operation.originalValue !== null ? `<span>Total solicitado: ${escapeHtml(operation.originalValue)}</span>` : ''}
-        </div>
-    `;
+    return operation.originalValue !== null
+        ? `${message} Total solicitado: ${operation.originalValue}.`
+        : message;
 }
 
 function renderEdgeDegradationMessage(target, type, text) {
@@ -438,6 +441,71 @@ function renderContextualMessage(target, type, text) {
             <strong>${escapeHtml(text)}</strong>
         </div>
     `;
+}
+
+function clearActionMessage(target) {
+    if (target) {
+        target.innerHTML = '';
+    }
+}
+
+function showTopologyActionModal(message, type = 'success') {
+    const modal = getTopologyActionModal();
+    const icon = modal.querySelector('[data-topology-action-modal-icon]');
+    const title = modal.querySelector('[data-topology-action-modal-title]');
+    const text = modal.querySelector('[data-topology-action-modal-text]');
+
+    modal.classList.remove('is-success', 'is-error');
+    modal.classList.add(`is-${type}`, 'is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    icon.className = `fas ${type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-check'}`;
+    title.textContent = type === 'error' ? 'No se pudo completar' : 'Operacion completada';
+    text.textContent = message;
+}
+
+function getTopologyActionModal() {
+    let modal = document.querySelector('[data-topology-action-modal]');
+    if (modal) {
+        return modal;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'topology-action-modal';
+    modal.dataset.topologyActionModal = '';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+        <div class="topology-action-modal-backdrop" data-topology-action-modal-close></div>
+        <section class="topology-action-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="topology-action-modal-title">
+            <button type="button" class="topology-action-modal-close" data-topology-action-modal-close aria-label="Cerrar">
+                <i class="fas fa-xmark"></i>
+            </button>
+            <span class="topology-action-modal-icon">
+                <i class="fas fa-circle-check" data-topology-action-modal-icon></i>
+            </span>
+            <div>
+                <p id="topology-action-modal-title" data-topology-action-modal-title>Operacion completada</p>
+                <h3 data-topology-action-modal-text></h3>
+            </div>
+        </section>
+    `;
+
+    modal.addEventListener('click', event => {
+        if (event.target.closest('[data-topology-action-modal-close]')) {
+            closeTopologyActionModal(modal);
+        }
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+            closeTopologyActionModal(modal);
+        }
+    });
+    document.body.appendChild(modal);
+    return modal;
+}
+
+function closeTopologyActionModal(modal) {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
 }
 
 function parseMetricValue(metric, value) {

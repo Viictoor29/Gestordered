@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/dashboard.css?v=20260523-split-css">
-    <script type="module" src="/js/network-dashboard.js?v=20260527-network-modules" defer></script>
+    <script type="module" src="/js/network-dashboard.js?v=20260529-guest-same-readonly" defer></script>
 </head>
 <body class="dashboard-page">
     <div class="dashboard-shell">
@@ -49,7 +49,7 @@
             <section id="overview" class="dashboard-card guest-server-panel">
                 <div class="panel-header">
                     <div>
-                        <p>Conexion con Mininet</p>
+                        <p>Conexion con Ryu</p>
                         <h2>Servidor de la API</h2>
                     </div>
                     <span class="server-status" data-server-status>
@@ -58,7 +58,7 @@
                     </span>
                 </div>
 
-                <form class="server-form" data-server-form>
+                <form class="server-form" data-server-form data-public-network-view="true" data-require-mininet-connection="true" data-read-only-network-view="true">
                     <label>
                         IP del servidor
                         <input type="text" name="serverIp" placeholder="Ej. 192.168.56.104:8080" autocomplete="off" data-server-input>

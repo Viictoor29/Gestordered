@@ -19,7 +19,11 @@ import {
     const button = document.querySelector('[data-server-connect]');
     const status = document.querySelector('[data-server-status]');
     const stage = document.querySelector('[data-topology-stage]');
-    const refreshIntervalMs = 300000;
+    const refreshIntervalMs = 60000;
+    const usesGuestProxy = form.dataset.publicNetworkView === 'true';
+    const readOnlyTopology = form.dataset.readOnlyNetworkView === 'true';
+    const requiresMininetConnection = form.dataset.requireMininetConnection === 'true'
+        || Boolean(document.querySelector('[data-mininet-status-body]'));
     let refreshTimer = null;
     let isLoadingTopology = false;
     let currentServer = '';
@@ -186,13 +190,18 @@ import {
         setStatus('loading', manual ? 'Conectando' : 'Actualizando');
 
         try {
-            const response = await fetch(`${baseUrl}/api/topology`, { headers: { Accept: 'application/json' } });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+            const topologyUrl = usesGuestProxy
+                ? buildGuestProxyUrl('/guest/api/topology', baseUrl)
+                : `${baseUrl}/api/topology`;
+            const checks = [fetchRequiredJson(topologyUrl, 'Ryu')];
+            if (requiresMininetConnection) {
+                const mininetUrl = usesGuestProxy
+                    ? buildGuestProxyUrl('/guest/api/mininet/status', toMininetUrl(baseUrl))
+                    : `${toMininetUrl(baseUrl)}/api/mininet/status`;
+                checks.push(fetchRequiredJson(mininetUrl, 'Mininet'));
             }
 
-            const payload = await response.json();
+            const [payload] = await Promise.all(checks);
             const topology = payload.data || payload;
             const nodes = Array.isArray(topology.nodes) ? topology.nodes : [];
             const edges = Array.isArray(topology.edges) ? topology.edges : [];
@@ -203,20 +212,53 @@ import {
             setStatus('connected', 'Conectado');
             renderTopology(nodes, edges);
             refreshLivePanels();
-            trafficPanel.setConnected();
+            trafficPanel.setConnected?.();
             notifyConnectionChange();
             startAutoRefresh();
         } catch (error) {
             currentServer = '';
             sessionStorage.removeItem('gestordered-api-connected');
             setStatus('error', 'Sin conexion');
-            renderMessage('No se pudo cargar la topologia', 'Comprueba que la API este levantada y permita peticiones desde esta web.');
+            renderMessage(
+                requiresMininetConnection ? 'No se pudo conectar con las dos APIs' : 'No se pudo conectar con Ryu',
+                error.message || (requiresMininetConnection ? 'Comprueba que Ryu y Mininet esten levantados.' : 'Comprueba que Ryu este levantado.')
+            );
             notifyConnectionChange();
             stopAutoRefresh();
         } finally {
             isLoadingTopology = false;
             setLoading(false);
         }
+    }
+
+    async function fetchRequiredJson(url, serviceName) {
+        let response;
+        try {
+            response = await fetch(url, { headers: { Accept: 'application/json' } });
+        } catch (error) {
+            throw new Error(`${serviceName} no responde.`);
+        }
+
+        if (!response.ok) {
+            throw new Error(`${serviceName} responde con HTTP ${response.status}.`);
+        }
+
+        const payload = await response.json();
+        if (payload && payload.ok === false) {
+            throw new Error(payload.error || `${serviceName} no esta disponible.`);
+        }
+
+        return payload;
+    }
+
+    function toMininetUrl(serverUrl) {
+        const url = new URL(serverUrl);
+        url.port = '8081';
+        return url.origin;
+    }
+
+    function buildGuestProxyUrl(path, serverUrl) {
+        return `${path}?serverUrl=${encodeURIComponent(serverUrl)}`;
     }
 
     function refreshLivePanels() {
@@ -318,12 +360,16 @@ import {
                 ${renderMetric('Bloqueos', summary.blocked, 'fa-ban', summary.blocked ? 'is-warning' : '')}
             </div>
             <div class="topology-refresh">
-                <span><i class="fas fa-rotate"></i> Actualizacion automatica cada 5 minutos</span>
+                <span><i class="fas fa-rotate"></i> Actualizacion automatica cada minuto</span>
                 <span>Ultima lectura: ${escapeHtml(formatTime(lastUpdatedAt))}</span>
                 <button type="button" class="topology-refresh-button" data-refresh-topology>
                     <i class="fas fa-arrows-rotate"></i>
                     Actualizar ahora
                 </button>
+            </div>
+            <div class="topology-discovery-note">
+                <i class="fas fa-circle-info"></i>
+                Los hosts se muestran cuando Ryu los descubre al generar o recibir trafico. Puedes arrastrar los nodos para recolocar el mapa.
             </div>
             <div class="topology-workspace">
                 <div class="topology-canvas">
@@ -341,19 +387,24 @@ import {
                     ${renderOverviewDetail(summary)}
                 </aside>
             </div>
-            <div class="topology-export-footer" data-topology-export-actions>
-                <button type="button" class="topology-refresh-button" data-topology-export="/api/topology/export">
-                    <i class="fas fa-download"></i>
-                    Exportar topologia
-                </button>
-                <span class="topology-export-status" data-topology-export-status></span>
-            </div>
+            ${readOnlyTopology ? '' : `
+                <div class="topology-export-footer" data-topology-export-actions>
+                    <button type="button" class="topology-refresh-button" data-topology-export="/api/topology/export">
+                        <i class="fas fa-download"></i>
+                        Exportar topologia
+                    </button>
+                    <span class="topology-export-status" data-topology-export-status></span>
+                </div>
+            `}
         `;
 
         stage.style.setProperty('--topology-panel-height', `${panelHeight}px`);
         bindTopologySelection(nodes, edges);
+        bindNodeDragging(layout.positions, edges, layout.width, layout.height);
         bindManualRefresh();
-        topologyExportActions.bind();
+        if (!readOnlyTopology) {
+            topologyExportActions.bind();
+        }
     }
 
     function getTopologyPanelHeight(nodes, edges) {
@@ -432,21 +483,25 @@ import {
         const switches = nodes.filter(node => node.type === 'switch');
         const hosts = nodes.filter(node => node.type !== 'switch');
         const positions = {};
+        const center = { x: width / 2, y: height / 2 + 28 };
 
         switches.forEach((node, index) => {
-            positions[node.id] = pointOnRow(index, switches.length, 205, width - 205, height / 2 + 62);
+            positions[node.id] = getSwitchPosition(index, switches.length, width, height, center);
         });
 
         hosts.forEach((node, index) => {
             const linkedSwitchId = findLinkedSwitch(node.id, edges);
             const anchor = positions[linkedSwitchId] || pointOnRow(index, hosts.length, 160, width - 160, height / 2);
-            const hostNumber = hosts.filter(host => findLinkedSwitch(host.id, edges) === linkedSwitchId).findIndex(host => host.id === node.id);
-            const direction = hostNumber % 2 === 0 ? -1 : 1;
-            const offset = Math.floor(hostNumber / 2) * 90;
+            const siblings = hosts.filter(host => findLinkedSwitch(host.id, edges) === linkedSwitchId);
+            const hostNumber = siblings.findIndex(host => host.id === node.id);
+            const baseAngle = Math.atan2(anchor.y - center.y, anchor.x - center.x);
+            const fanOffset = siblings.length <= 1 ? 0 : (hostNumber - (siblings.length - 1) / 2) * 0.42;
+            const angle = baseAngle + fanOffset;
+            const distance = 190 + Math.min(hostNumber, 2) * 22;
 
             positions[node.id] = {
-                x: Math.max(95, Math.min(width - 95, anchor.x + direction * (130 + offset))),
-                y: direction < 0 ? 105 : height - 105
+                x: clamp(anchor.x + Math.cos(angle) * distance, 95, width - 95),
+                y: clamp(anchor.y + Math.sin(angle) * distance, 90, height - 90)
             };
         });
 
@@ -457,6 +512,25 @@ import {
         });
 
         return { width, height, positions };
+    }
+
+    function getSwitchPosition(index, total, width, height, center) {
+        if (total <= 2) {
+            return pointOnRow(index, total, 235, width - 235, center.y);
+        }
+
+        const radiusX = Math.min(310, Math.max(190, 120 + total * 24));
+        const radiusY = Math.min(190, Math.max(130, 90 + total * 12));
+        const angle = -Math.PI / 2 + (Math.PI * 2 * index) / total;
+
+        return {
+            x: center.x + Math.cos(angle) * radiusX,
+            y: center.y + Math.sin(angle) * radiusY
+        };
+    }
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     function findLinkedSwitch(hostId, edges) {
@@ -494,17 +568,25 @@ import {
         const label = edge.type === 'host-link'
             ? `${edge['s-iface'] || ''}`
             : `${edge.src_iface || ''} - ${edge.dst_iface || ''}`;
-        const labelPosition = getEdgeLabelPosition(source, target, edge.type);
+        const labelPosition = getEdgeLabelPosition(source, target, edge.type, label, edge);
 
         return `
-            <g class="topology-edge ${isUp ? 'is-up' : 'is-down'} ${isBlocked ? 'is-blocked' : ''}" data-detail-type="edge" data-detail-id="${index}" tabindex="0">
+            <g class="topology-edge ${isUp ? 'is-up' : 'is-down'} ${isBlocked ? 'is-blocked' : ''}"
+               data-detail-type="edge"
+               data-detail-id="${index}"
+               data-source-id="${escapeHtml(sourceId)}"
+               data-target-id="${escapeHtml(targetId)}"
+               data-edge-type="${escapeHtml(edge.type)}"
+               data-switch-endpoint="${escapeHtml(getHostLinkSwitchEndpoint(edge, sourceId, targetId))}"
+               data-edge-label="${escapeHtml(label)}"
+               tabindex="0">
                 <line x1="${source.x}" y1="${source.y}" x2="${target.x}" y2="${target.y}"></line>
                 <text x="${labelPosition.x}" y="${labelPosition.y}">${escapeHtml(label)}</text>
             </g>
         `;
     }
 
-    function getEdgeLabelPosition(source, target, type) {
+    function getEdgeLabelPosition(source, target, type, label = '', edge = null) {
         const midX = (source.x + target.x) / 2;
         const midY = (source.y + target.y) / 2;
         const dx = target.x - source.x;
@@ -512,12 +594,47 @@ import {
         const length = Math.hypot(dx, dy) || 1;
         const normalX = -dy / length;
         const normalY = dx / length;
-        const offset = type === 'host-link' ? 28 : 16;
+
+        if (type === 'host-link') {
+            const switchIsSource = Boolean(edge?.['source-s']);
+            const switchPoint = switchIsSource ? source : target;
+            const hostPoint = switchIsSource ? target : source;
+            const switchDx = hostPoint.x - switchPoint.x;
+            const switchDy = hostPoint.y - switchPoint.y;
+            const switchLength = Math.hypot(switchDx, switchDy) || 1;
+            const fromSwitchDistance = 78;
+            const sideOffset = Math.abs(switchDy) < 18 ? 42 : 30;
+
+            return {
+                x: switchPoint.x + (switchDx / switchLength) * fromSwitchDistance + normalX * sideOffset,
+                y: switchPoint.y + (switchDy / switchLength) * fromSwitchDistance + normalY * sideOffset
+            };
+        }
+
+        const offset = type === 'host-link' ? 42 : 18;
+        const along = type === 'host-link' ? Math.min(52, Math.max(24, String(label).length * 2.2)) : 0;
+        const direction = dx >= 0 ? 1 : -1;
 
         return {
-            x: midX + normalX * offset,
+            x: midX + normalX * offset + (dx / length) * along * direction,
             y: midY + normalY * offset
         };
+    }
+
+    function getHostLinkSwitchEndpoint(edge, sourceId, targetId) {
+        if (edge.type !== 'host-link') {
+            return '';
+        }
+
+        if (edge['source-s'] && edge['source-s'] === sourceId) {
+            return 'source';
+        }
+
+        if (edge['target-s'] && edge['target-s'] === targetId) {
+            return 'target';
+        }
+
+        return String(sourceId).startsWith('s') ? 'source' : 'target';
     }
 
     function renderNode(node, position) {
@@ -533,7 +650,7 @@ import {
         ].filter(Boolean).join(' ');
 
         return `
-            <g class="${nodeClass}" transform="translate(${position.x} ${position.y})" data-detail-type="node" data-detail-id="${escapeHtml(node.id)}" tabindex="0">
+            <g class="${nodeClass}" transform="translate(${position.x} ${position.y})" data-detail-type="node" data-detail-id="${escapeHtml(node.id)}" data-node-id="${escapeHtml(node.id)}" tabindex="0">
                 ${isSwitch ? '<rect x="-48" y="-36" width="96" height="72" rx="10"></rect>' : '<circle r="39"></circle>'}
                 ${isSwitch ? renderSwitchIcon() : renderHostIcon()}
                 <text class="node-title" y="${isSwitch ? 20 : 18}">${escapeHtml(title)}</text>
@@ -568,7 +685,15 @@ import {
         const selectableItems = stage.querySelectorAll('[data-detail-type]');
 
         selectableItems.forEach(item => {
-            item.addEventListener('click', () => selectTopologyItem(item, detail, nodes, edges));
+            item.addEventListener('click', event => {
+                if (item.dataset.skipClick === 'true') {
+                    event.preventDefault();
+                    item.dataset.skipClick = 'false';
+                    return;
+                }
+
+                selectTopologyItem(item, detail, nodes, edges);
+            });
             item.addEventListener('keydown', event => {
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
@@ -578,6 +703,118 @@ import {
         });
     }
 
+    function bindNodeDragging(positions, edges, width, height) {
+        const svg = stage.querySelector('.topology-map');
+        if (!svg) {
+            return;
+        }
+
+        let dragState = null;
+
+        svg.querySelectorAll('[data-node-id]').forEach(nodeElement => {
+            nodeElement.addEventListener('pointerdown', event => {
+                if (event.button !== 0) {
+                    return;
+                }
+
+                const nodeId = nodeElement.dataset.nodeId;
+                const startPoint = svgPointFromEvent(svg, event);
+                const currentPosition = positions[nodeId];
+                if (!currentPosition) {
+                    return;
+                }
+
+                dragState = {
+                    nodeElement,
+                    nodeId,
+                    pointerId: event.pointerId,
+                    startPoint,
+                    startPosition: { ...currentPosition },
+                    moved: false
+                };
+                nodeElement.setPointerCapture(event.pointerId);
+                nodeElement.classList.add('is-dragging');
+                event.preventDefault();
+            });
+        });
+
+        svg.addEventListener('pointermove', event => {
+            if (!dragState || event.pointerId !== dragState.pointerId) {
+                return;
+            }
+
+            const point = svgPointFromEvent(svg, event);
+            const dx = point.x - dragState.startPoint.x;
+            const dy = point.y - dragState.startPoint.y;
+            if (Math.hypot(dx, dy) > 3) {
+                dragState.moved = true;
+            }
+
+            const nextPosition = {
+                x: clamp(dragState.startPosition.x + dx, 70, width - 70),
+                y: clamp(dragState.startPosition.y + dy, 72, height - 72)
+            };
+
+            positions[dragState.nodeId] = nextPosition;
+            dragState.nodeElement.setAttribute('transform', `translate(${nextPosition.x} ${nextPosition.y})`);
+            updateConnectedEdges(svg, dragState.nodeId, positions);
+        });
+
+        svg.addEventListener('pointerup', finishDrag);
+        svg.addEventListener('pointercancel', finishDrag);
+
+        function finishDrag(event) {
+            if (!dragState || event.pointerId !== dragState.pointerId) {
+                return;
+            }
+
+            dragState.nodeElement.classList.remove('is-dragging');
+            if (dragState.moved) {
+                dragState.nodeElement.dataset.skipClick = 'true';
+            }
+            dragState = null;
+        }
+    }
+
+    function svgPointFromEvent(svg, event) {
+        const point = svg.createSVGPoint();
+        point.x = event.clientX;
+        point.y = event.clientY;
+        return point.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    function updateConnectedEdges(svg, nodeId, positions) {
+        svg.querySelectorAll(`.topology-edge[data-source-id="${cssEscape(nodeId)}"], .topology-edge[data-target-id="${cssEscape(nodeId)}"]`).forEach(edgeElement => {
+            const source = positions[edgeElement.dataset.sourceId];
+            const target = positions[edgeElement.dataset.targetId];
+            if (!source || !target) {
+                return;
+            }
+
+            const line = edgeElement.querySelector('line');
+            const text = edgeElement.querySelector('text');
+            const labelPosition = getEdgeLabelPosition(source, target, edgeElement.dataset.edgeType, edgeElement.dataset.edgeLabel, {
+                'source-s': edgeElement.dataset.switchEndpoint === 'source' ? edgeElement.dataset.sourceId : '',
+                'target-s': edgeElement.dataset.switchEndpoint === 'target' ? edgeElement.dataset.targetId : ''
+            });
+
+            line.setAttribute('x1', source.x);
+            line.setAttribute('y1', source.y);
+            line.setAttribute('x2', target.x);
+            line.setAttribute('y2', target.y);
+            text.setAttribute('x', labelPosition.x);
+            text.setAttribute('y', labelPosition.y);
+        });
+    }
+
+    function cssEscape(value) {
+        if (window.CSS && typeof window.CSS.escape === 'function') {
+            return window.CSS.escape(value);
+        }
+
+        return String(value).replace(/["\\]/g, '\\$&');
+    }
+
     function selectTopologyItem(item, detail, nodes, edges) {
         stage.querySelectorAll('.is-selected').forEach(selected => selected.classList.remove('is-selected'));
         item.classList.add('is-selected');
@@ -585,14 +822,18 @@ import {
         if (item.dataset.detailType === 'node') {
             const node = nodes.find(candidate => candidate.id === item.dataset.detailId);
             detail.innerHTML = renderNodeDetail(node, edges);
-            bindNodeIpTrafficActions(detail, node, contextualActionContext);
+            if (!readOnlyTopology) {
+                bindNodeIpTrafficActions(detail, node, contextualActionContext);
+            }
             return;
         }
 
         const edge = edges[Number(item.dataset.detailId)];
         detail.innerHTML = renderEdgeDetail(edge);
-        bindEdgeStateActions(detail, edge, contextualActionContext);
-        bindEdgeDegradationForm(detail, edge, contextualActionContext);
+        if (!readOnlyTopology) {
+            bindEdgeStateActions(detail, edge, contextualActionContext);
+            bindEdgeDegradationForm(detail, edge, contextualActionContext);
+        }
     }
 
     function renderNodeDetail(node, edges = []) {
@@ -618,9 +859,9 @@ import {
             </div>
             <div class="detail-badges">
                 ${statusBadge(state, node.connected === false ? 'is-danger' : 'is-success')}
-                ${statusBadge(isNodeBlocked(node) ? 'Bloqueado' : 'Permitido', isNodeBlocked(node) ? 'is-danger' : 'is-success')}
+                ${isSwitch ? '' : statusBadge(isNodeBlocked(node) ? 'Bloqueado' : 'Permitido', isNodeBlocked(node) ? 'is-danger' : 'is-success')}
             </div>
-            ${renderNodeIpTrafficControl(node)}
+            ${readOnlyTopology ? '' : renderNodeIpTrafficControl(node)}
             ${detailSection('Identidad', [
                 ['ID', node.id],
                 ['Tipo', formatType(node.type)],
@@ -709,12 +950,12 @@ import {
                 </div>
             </div>
             <div class="detail-badges">
-                ${statusBadge(formatEdgeState(edge), getEdgeStateBadgeClass(edge))}
+                ${isEdgeBlocked(edge) ? '' : statusBadge(formatEdgeState(edge), getEdgeStateBadgeClass(edge))}
                 ${statusBadge(formatHealth(degradation), degradation === 'healthy' ? 'is-success' : 'is-warning')}
                 ${renderEdgeTrafficBadge(edge)}
             </div>
-            ${renderEdgeStateControl(edge)}
-            ${renderEdgeDegradationControl(edge)}
+            ${readOnlyTopology ? '' : renderEdgeStateControl(edge)}
+            ${readOnlyTopology ? '' : renderEdgeDegradationControl(edge)}
             ${detailSection('Extremos', endpointRows)}
             ${detailSection('Estado operativo', [
                 ['Estado', formatState(edge.state)],
@@ -834,7 +1075,6 @@ import {
                 </div>
                 <div class="switch-port-tags">
                     ${statusBadge(port.enabled !== false ? 'Activo' : 'Inactivo', port.enabled !== false ? 'is-success' : 'is-danger')}
-                    ${statusBadge(formatForwarding(port.forwarding), port.forwarding ? 'is-success' : 'is-warning')}
                     ${statusBadge(`STP: ${formatStpState(port.stpState, port.stpBlocked, port.forwarding)}`, port.stpBlocked ? 'is-warning' : 'is-success')}
                 </div>
                 <dl class="switch-port-list">

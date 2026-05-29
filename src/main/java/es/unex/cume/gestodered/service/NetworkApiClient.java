@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
@@ -49,25 +50,48 @@ public class NetworkApiClient {
             HttpServletRequest request) {
         URI uri = buildUri(baseUrl, path, request);
 
-        return restClient.method(method)
-                .uri(uri)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .body(body == null || body.isBlank() ? "{}" : body)
-                .exchange((clientRequest, clientResponse) -> {
-                    String responseBody;
-                    try {
-                        responseBody = StreamUtils.copyToString(clientResponse.getBody(), StandardCharsets.UTF_8);
-                    } catch (IOException exception) {
-                        responseBody = "{\"ok\":false,\"error\":\"No se pudo leer la respuesta del servicio de red.\"}";
-                    }
+        try {
+            return restClient.method(method)
+                    .uri(uri)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body(body == null || body.isBlank() ? "{}" : body)
+                    .exchange((clientRequest, clientResponse) -> {
+                        String responseBody;
+                        try {
+                            responseBody = StreamUtils.copyToString(clientResponse.getBody(), StandardCharsets.UTF_8);
+                        } catch (IOException exception) {
+                            responseBody = "{\"ok\":false,\"error\":\"No se pudo leer la respuesta del servicio de red.\"}";
+                        }
 
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.setContentType(MediaType.APPLICATION_JSON);
-                    return ResponseEntity.status(clientResponse.getStatusCode())
-                            .headers(headers)
-                            .body(responseBody);
-                });
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.setContentType(MediaType.APPLICATION_JSON);
+                        return ResponseEntity.status(clientResponse.getStatusCode())
+                                .headers(headers)
+                                .body(responseBody);
+                    });
+        } catch (RestClientException exception) {
+            return jsonError(502, "No se pudo conectar con el servicio de red: " + safeMessage(exception));
+        }
+    }
+
+    private ResponseEntity<String> jsonError(int status, String message) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return ResponseEntity.status(status)
+                .headers(headers)
+                .body("{\"ok\":false,\"error\":\"" + escapeJson(message) + "\"}");
+    }
+
+    private String safeMessage(Exception exception) {
+        String message = exception.getMessage();
+        return message == null || message.isBlank() ? "conexion interrumpida" : message;
+    }
+
+    private String escapeJson(String value) {
+        return value == null ? "" : value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"");
     }
 
     private URI buildUri(String baseUrl, String path, HttpServletRequest request) {

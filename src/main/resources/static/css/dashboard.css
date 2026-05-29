@@ -533,6 +533,13 @@ button {
     color: #7c5f10;
 }
 
+.topology-action-feedback-row {
+    display: flex;
+    margin: 10px 0 0;
+    max-width: none;
+    width: 100%;
+}
+
 .topology-file-field {
     color: #1e293b;
     display: grid;
@@ -1989,6 +1996,24 @@ button {
     color: #D4AF37;
 }
 
+.topology-discovery-note {
+    border: 1px solid rgba(30, 60, 114, 0.12);
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #334155;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: -4px 0 14px;
+    padding: 9px 12px;
+    font-size: 0.84rem;
+    font-weight: 800;
+}
+
+.topology-discovery-note i {
+    color: #D4AF37;
+}
+
 .topology-refresh-button {
     border: 1px solid #dbe3ef;
     border-radius: 8px;
@@ -2175,8 +2200,17 @@ button {
 }
 
 .topology-node {
-    cursor: pointer;
+    cursor: grab;
     outline: none;
+}
+
+.topology-node.is-dragging {
+    cursor: grabbing;
+}
+
+.topology-node.is-dragging rect,
+.topology-node.is-dragging circle {
+    filter: drop-shadow(0 12px 18px rgba(15, 23, 42, 0.22));
 }
 
 .topology-node:hover rect,
@@ -2696,6 +2730,93 @@ button {
 
 .edge-degradation-feedback.is-loading {
     background: #f8fafc;
+}
+
+.topology-action-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: none;
+    place-items: center;
+    padding: 24px;
+}
+
+.topology-action-modal.is-open {
+    display: grid;
+}
+
+.topology-action-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.42);
+}
+
+.topology-action-modal-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(430px, calc(100vw - 32px));
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    padding: 22px;
+}
+
+.topology-action-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: 0;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #172554;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+}
+
+.topology-action-modal-close:hover {
+    background: #fffbeb;
+    color: #1e3c72;
+}
+
+.topology-action-modal-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 1.35rem;
+}
+
+.topology-action-modal.is-success .topology-action-modal-icon {
+    background: #ecfdf3;
+    color: #166534;
+}
+
+.topology-action-modal.is-error .topology-action-modal-icon {
+    background: #fff1f3;
+    color: #991b1b;
+}
+
+.topology-action-modal-dialog p {
+    margin: 2px 36px 4px 0;
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.topology-action-modal-dialog h3 {
+    margin: 0;
+    color: #172554;
+    font-size: 1rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
 }
 
 .blocked-ip-list {

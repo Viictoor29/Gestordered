@@ -85,7 +85,7 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
                 ${renderHealthKpi('Estado global', formatOverallStatus(summary.overall_status), 'fa-heart-pulse', healthStatusClass(summary.overall_status))}
                 ${renderHealthKpi('Switches', summary.switches?.total ?? health.switch_count ?? switches.length, 'fa-network-wired')}
                 ${renderHealthKpi('Puertos correctos', summary.ports?.healthy ?? countPortsByStatus(switches, 'healthy'), 'fa-ethernet', 'is-success')}
-                ${renderHealthKpi('Trafico total', formatTraffic(summary.traffic), 'fa-gauge-high')}
+                ${renderHealthKpi('Trafico actual', formatTraffic(summary.traffic), 'fa-gauge-high')}
                 ${renderHealthKpi('Puertos con aviso', summary.ports?.warning ?? countPortsByStatus(switches, 'warning'), 'fa-triangle-exclamation', 'is-warning')}
                 ${renderHealthKpi('Puertos degradados', summary.ports?.degraded ?? countPortsByStatus(switches, 'degraded'), 'fa-bug', 'is-danger')}
                 ${renderHealthKpi('Puertos caidos', summary.ports?.down ?? countPortsByEffectiveState(switches, 'down'), 'fa-circle-xmark', 'is-danger')}
@@ -124,7 +124,7 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
 
                 <dl class="health-switch-stats">
                     ${detailRow('Flujos', sw.flow_count ?? 0)}
-                    ${detailRow('Trafico', formatTraffic(traffic))}
+                    ${detailRow('Trafico actual', formatTraffic(traffic))}
                     ${detailRow('RX errores', totals.rx_errors ?? 0)}
                     ${detailRow('TX errores', totals.tx_errors ?? 0)}
                     ${detailRow('RX drops', totals.rx_dropped ?? 0)}
@@ -195,7 +195,7 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
                     ${health.stp_blocked ? statusBadge('STP bloqueado', 'is-warning') : ''}
                 </div>
                 <dl class="health-port-data">
-                    ${detailRow('Trafico', formatTraffic(speed))}
+                    ${detailRow('Trafico actual', formatTraffic(speed))}
                     ${detailRow('RX paquetes', stats.rx_packets ?? 0)}
                     ${detailRow('TX paquetes', stats.tx_packets ?? 0)}
                     ${detailRow('RX errores', stats.rx_errors ?? 0)}
@@ -557,19 +557,37 @@ function formatStpState(value, blocked) {
 }
 
 function formatTraffic(traffic = {}) {
-    if (traffic.mbps !== undefined) {
-        return `${traffic.mbps} Mbps`;
+    if (traffic.bps !== undefined) {
+        return formatBitrate(traffic.bps);
     }
 
     if (traffic.kbps !== undefined) {
-        return `${traffic.kbps} Kbps`;
+        return formatBitrate(Number(traffic.kbps) * 1000);
     }
 
-    if (traffic.bps !== undefined) {
-        return `${traffic.bps} bps`;
+    if (traffic.mbps !== undefined) {
+        return formatBitrate(Number(traffic.mbps) * 1000000);
     }
 
     return '0 bps';
+}
+
+function formatBitrate(bps) {
+    const value = Number(bps || 0);
+    if (!Number.isFinite(value) || value <= 0) {
+        return '0 bps';
+    }
+
+    const units = ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps'];
+    let current = value;
+    let unitIndex = 0;
+    while (current >= 1000 && unitIndex < units.length - 1) {
+        current /= 1000;
+        unitIndex += 1;
+    }
+
+    const decimals = current >= 100 || unitIndex === 0 ? 0 : current >= 10 ? 1 : 2;
+    return `${current.toFixed(decimals)} ${units[unitIndex]}`;
 }
 
 function formatDuration(seconds) {

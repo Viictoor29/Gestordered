@@ -31,6 +31,8 @@ public class SecurityConfig {
                     "/login",
                     "/register",
                     "/guest",
+                    "/guest/api/topology",
+                    "/guest/api/mininet/status",
                     "/guest/role-requests",
                     "/guest/role-requests/status",
                     "/forgot-password",

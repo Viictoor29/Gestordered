@@ -415,14 +415,31 @@
             return feedback;
         }
 
-        const existing = button.parentElement?.querySelector(`[data-action-feedback-for="${button.dataset.action || 'action'}"]`);
+        const action = button.dataset.action || 'action';
+        const topologyItem = button.closest('.topology-db-item');
+        if (topologyItem) {
+            const existingCardFeedback = topologyItem.querySelector(`[data-action-feedback-for="${action}"]`);
+            if (existingCardFeedback) {
+                return existingCardFeedback;
+            }
+
+            const actions = topologyItem.querySelector('.role-request-actions');
+            const target = document.createElement('div');
+            target.className = 'topology-action-feedback topology-action-feedback-row';
+            target.dataset.actionFeedbackFor = action;
+            target.hidden = true;
+            actions?.insertAdjacentElement('afterend', target);
+            return target;
+        }
+
+        const existing = button.parentElement?.querySelector(`[data-action-feedback-for="${action}"]`);
         if (existing) {
             return existing;
         }
 
         const target = document.createElement('span');
         target.className = 'topology-action-feedback';
-        target.dataset.actionFeedbackFor = button.dataset.action || 'action';
+        target.dataset.actionFeedbackFor = action;
         target.hidden = true;
         button.insertAdjacentElement('afterend', target);
         return target;

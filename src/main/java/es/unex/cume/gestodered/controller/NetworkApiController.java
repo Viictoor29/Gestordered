@@ -33,6 +33,16 @@ public class NetworkApiController {
         return networkApiClient.ryu(HttpMethod.GET, "/api/topology", null, request);
     }
 
+    @GetMapping("/guest/api/topology")
+    public ResponseEntity<String> getGuestTopology(@RequestParam String serverUrl) {
+        return networkApiClient.absolute(serverUrl, HttpMethod.GET, "/api/topology", null);
+    }
+
+    @GetMapping("/guest/api/mininet/status")
+    public ResponseEntity<String> getGuestMininetStatus(@RequestParam String serverUrl) {
+        return networkApiClient.absolute(serverUrl, HttpMethod.GET, "/api/mininet/status", null);
+    }
+
     @GetMapping("/api/topology/export")
     public ResponseEntity<String> exportTopology(Authentication authentication, HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
