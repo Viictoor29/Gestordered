@@ -7,6 +7,8 @@
         return;
     }
 
+    bindInventoryTabs();
+
     root.querySelectorAll('[data-inventory-form]').forEach(form => {
         form.addEventListener('submit', event => {
             event.preventDefault();
@@ -45,12 +47,6 @@
             renderFeedback('Aplicando cambio en Mininet...', 'is-pending');
             const payload = await sendJson(proxyUrl(request.path, serverUrl), request.method, request.body);
             form.reset();
-            if (form.dataset.inventoryForm === 'add-switch') {
-                const protocols = form.querySelector('input[name="protocols"]');
-                if (protocols) {
-                    protocols.value = 'OpenFlow13';
-                }
-            }
             renderFeedback(payload.message || request.successMessage, 'is-success');
             window.dispatchEvent(new CustomEvent('gestordered:refresh-live-network'));
         } catch (error) {
@@ -90,9 +86,7 @@
                 method: 'POST',
                 path: '/api/admin/mininet/switches',
                 body: compact({
-                    name: normalizeNodeName(values.name),
-                    dpid: values.dpid,
-                    protocols: values.protocols || 'OpenFlow13'
+                    name: normalizeNodeName(values.name)
                 }),
                 confirmMessage: `Vas a crear el switch ${normalizeNodeName(values.name)}.`,
                 successMessage: `Switch ${normalizeNodeName(values.name)} creado correctamente.`
@@ -112,6 +106,29 @@
         }
 
         throw new Error('Accion de inventario no reconocida.');
+    }
+
+    function bindInventoryTabs() {
+        const tabs = root.querySelectorAll('[data-inventory-tab]');
+        const panels = root.querySelectorAll('[data-inventory-panel]');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const selected = tab.dataset.inventoryTab;
+
+                tabs.forEach(candidate => {
+                    const isActive = candidate === tab;
+                    candidate.classList.toggle('is-active', isActive);
+                    candidate.setAttribute('aria-selected', String(isActive));
+                });
+
+                panels.forEach(panel => {
+                    const isActive = panel.dataset.inventoryPanel === selected;
+                    panel.classList.toggle('is-active', isActive);
+                    panel.hidden = !isActive;
+                });
+            });
+        });
     }
 
     async function sendJson(url, method, body) {

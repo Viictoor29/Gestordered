@@ -558,19 +558,59 @@ button {
     color: #7c5f10;
 }
 
-.topology-inventory-grid {
+.topology-inventory-tabs {
     display: grid;
-    grid-template-columns: repeat(3, minmax(210px, 1fr));
     gap: 12px;
+}
+
+.topology-inventory-tablist {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.topology-inventory-tab {
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 9px 12px;
+    font-weight: 900;
+}
+
+.topology-inventory-tab:hover,
+.topology-inventory-tab.is-active {
+    border-color: rgba(212, 175, 55, 0.62);
+    background: #fffbeb;
+    color: #172554;
+}
+
+.topology-inventory-tab i {
+    color: #D4AF37;
 }
 
 .topology-inventory-form {
     border: 1px solid #dbe3ef;
     border-radius: 8px;
     background: #f8fafc;
-    display: grid;
+    display: none;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
     padding: 14px;
+}
+
+.topology-inventory-form.is-active {
+    display: grid;
+}
+
+.topology-inventory-form h5,
+.topology-inventory-form .btn-panel {
+    grid-column: 1 / -1;
 }
 
 .topology-inventory-form.is-danger-zone {
@@ -3284,7 +3324,7 @@ button {
     .topologies-layout,
     .topology-live-grid,
     .topology-apply-device,
-    .topology-inventory-grid {
+    .topology-inventory-form {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -3327,7 +3367,7 @@ button {
     .topologies-layout,
     .topology-live-grid,
     .topology-apply-device,
-    .topology-inventory-grid,
+    .topology-inventory-form,
     .permission-actions {
         grid-template-columns: 1fr;
     }

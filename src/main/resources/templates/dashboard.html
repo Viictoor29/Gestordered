@@ -199,8 +199,23 @@
                             <span data-admin-inventory-feedback hidden></span>
                         </div>
 
-                        <div class="topology-inventory-grid">
-                            <form class="topology-inventory-form" data-inventory-form="add-host">
+                        <div class="topology-inventory-tabs">
+                            <div class="topology-inventory-tablist" role="tablist" aria-label="Tipo de elemento a añadir">
+                                <button type="button" class="topology-inventory-tab is-active" role="tab" aria-selected="true" data-inventory-tab="host">
+                                    <i class="fas fa-desktop"></i>
+                                    Host
+                                </button>
+                                <button type="button" class="topology-inventory-tab" role="tab" aria-selected="false" data-inventory-tab="switch">
+                                    <i class="fas fa-network-wired"></i>
+                                    Switch
+                                </button>
+                                <button type="button" class="topology-inventory-tab" role="tab" aria-selected="false" data-inventory-tab="link">
+                                    <i class="fas fa-link"></i>
+                                    Enlace
+                                </button>
+                            </div>
+
+                            <form class="topology-inventory-form is-active" data-inventory-form="add-host" data-inventory-panel="host">
                                 <h5><i class="fas fa-desktop"></i> Añadir host</h5>
                                 <label>Nombre <input type="text" name="name" placeholder="h3" required></label>
                                 <label>IPv4 <input type="text" name="ip" placeholder="10.0.0.3/8"></label>
@@ -210,15 +225,13 @@
                                 <button type="submit" class="btn-panel"><i class="fas fa-plus"></i> Añadir host</button>
                             </form>
 
-                            <form class="topology-inventory-form" data-inventory-form="add-switch">
+                            <form class="topology-inventory-form" data-inventory-form="add-switch" data-inventory-panel="switch" hidden>
                                 <h5><i class="fas fa-network-wired"></i> Añadir switch</h5>
                                 <label>Nombre <input type="text" name="name" placeholder="s3" required></label>
-                                <label>DPID <input type="text" name="dpid" placeholder="3"></label>
-                                <label>Protocolos <input type="text" name="protocols" value="OpenFlow13"></label>
                                 <button type="submit" class="btn-panel"><i class="fas fa-plus"></i> Añadir switch</button>
                             </form>
 
-                            <form class="topology-inventory-form" data-inventory-form="add-link">
+                            <form class="topology-inventory-form" data-inventory-form="add-link" data-inventory-panel="link" hidden>
                                 <h5><i class="fas fa-link"></i> Añadir enlace</h5>
                                 <label>Nodo 1 <input type="text" name="node1" placeholder="s1" required></label>
                                 <label>Nodo 2 <input type="text" name="node2" placeholder="s2" required></label>
