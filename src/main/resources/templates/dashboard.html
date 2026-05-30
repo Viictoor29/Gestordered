@@ -8,9 +8,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/dashboard.css?v=20260531-topology-editor">
-    <script type="module" src="/js/network-dashboard.js?v=20260531-topology-editor" defer></script>
+    <script type="module" src="/js/network-dashboard.js?v=20260531-physical-links" defer></script>
     <script type="module" src="/js/admin-topologies.js?v=20260529-draggable-topology" defer></script>
-    <script type="module" src="/js/admin-live-inventory.js?v=20260531-topology-editor" defer></script>
+    <script type="module" src="/js/admin-live-inventory.js?v=20260531-physical-links" defer></script>
 </head>
 <body class="dashboard-page">
     <div class="dashboard-shell">
@@ -193,7 +193,6 @@
                     <div class="topology-live-inventory" data-admin-live-inventory th:if="${isAdmin}">
                         <div class="topology-live-inventory-header">
                             <div class="topology-live-inventory-title">
-                                <span><i class="fas fa-pen-to-square"></i></span>
                                 <div>
                                     <p>Administracion</p>
                                     <h4>Modificar topología</h4>
@@ -240,9 +239,9 @@
 
                             <form class="topology-inventory-form" data-inventory-form="add-link" data-inventory-panel="link" hidden>
                                 <h5><i class="fas fa-link"></i> Añadir enlace</h5>
-                                <label>Desde <input type="text" name="node1" placeholder="H1" required></label>
-                                <label>Hasta <input type="text" name="node2" placeholder="S1" required></label>
-                                <p class="topology-inventory-help">Puedes enlazar host-switch o switch-switch. Los puertos se calculan automaticamente con el primer puerto libre.</p>
+                                <label>Origen (host o switch) <input type="text" name="node1" placeholder="Ej. H1 o S1" required></label>
+                                <label>Destino (host o switch) <input type="text" name="node2" placeholder="Ej. S1 o S2" required></label>
+                                <p class="topology-inventory-help">En origen y destino puedes indicar un host o un switch. Se admiten enlaces host-switch y switch-switch. Los puertos se calculan automaticamente con el primer puerto libre.</p>
                                 <button type="submit" class="btn-panel"><i class="fas fa-plus"></i> Añadir enlace</button>
                             </form>
                         </div>

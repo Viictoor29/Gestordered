@@ -512,7 +512,7 @@
 
     function normalizeInventoryLinkPair(link) {
         if (typeof link === 'string') {
-            const names = link.match(/[hs]\d+/gi) || [];
+            const names = extractPhysicalLinkNodes(link);
             return names.length >= 2 ? normalizeLinkPair(names[0], names[1]) : '';
         }
 
@@ -520,6 +520,14 @@
             link?.node1 || link?.source || link?.['source-h'] || link?.['source-s'] || link?.src?.node,
             link?.node2 || link?.target || link?.['target-h'] || link?.['target-s'] || link?.dst?.node
         );
+    }
+
+    function extractPhysicalLinkNodes(link) {
+        return String(link || '')
+            .split('<->')
+            .map(endpoint => endpoint.trim().match(/^(.+?)-eth\d+$/i)?.[1] || '')
+            .map(normalizeNodeName)
+            .filter(Boolean);
     }
 
     function normalizeLinkPair(node1, node2) {
