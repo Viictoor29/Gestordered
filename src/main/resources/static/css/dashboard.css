@@ -3501,3 +3501,16 @@ button {
         flex-direction: column;
     }
 }
+
+.topology-inventory-help {
+    align-self: end;
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 800;
+    line-height: 1.35;
+    margin: 0;
+    padding: 8px 10px;
+}
