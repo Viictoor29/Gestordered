@@ -223,7 +223,8 @@ public class NetworkApiController {
             "/api/admin/mininet/switches",
             "/api/admin/mininet/links",
             "/api/admin/mininet/links/add",
-            "/api/admin/mininet/links/delete"
+            "/api/admin/mininet/links/delete",
+            "/api/admin/mininet/topology/clear"
     })
     public ResponseEntity<String> postAdminMininetOperationFrom(
             @RequestParam String serverUrl,

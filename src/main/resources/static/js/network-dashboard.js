@@ -1,4 +1,4 @@
-import { initNetworkStatusPanels } from './network/status-panels.js';
+import { initNetworkStatusPanels } from './network/status-panels.js?v=20260531-topology-editor';
 import { initBlockedIpsPanel } from './network/blocked-ips-panel.js';
 import { initHealthPanel } from './network/health-panel.js';
 import { initStpPanel } from './network/stp-panel.js';
@@ -30,6 +30,7 @@ import {
     let currentServer = '';
     let lastUpdatedAt = null;
     let pendingDeleteRequest = null;
+    const movedNodePositions = new Map();
 
     if (!form || !input || !button || !status || !stage) {
         return;
@@ -204,7 +205,7 @@ import {
                 checks.push(fetchRequiredJson(mininetUrl, 'Mininet'));
             }
 
-            const [payload] = await Promise.all(checks);
+            const [payload, mininetPayload] = await Promise.all(checks);
             const topology = payload.data || payload;
             const nodes = Array.isArray(topology.nodes) ? topology.nodes : [];
             const edges = Array.isArray(topology.edges) ? topology.edges : [];
@@ -214,6 +215,7 @@ import {
             lastUpdatedAt = new Date();
             setStatus('connected', 'Conectado');
             renderTopology(nodes, edges);
+            renderPendingMininetDiscovery(nodes, edges, mininetPayload?.data || mininetPayload);
             refreshLivePanels();
             trafficPanel.setConnected?.();
             notifyConnectionChange();
@@ -340,7 +342,86 @@ import {
                 <h3>${escapeHtml(title)}</h3>
                 <p>${escapeHtml(text)}</p>
             </div>
+            ${canManageLiveInventory ? '<div class="topology-pending-discovery" data-mininet-pending-discovery hidden></div>' : ''}
         `;
+    }
+
+    function renderPendingMininetDiscovery(nodes, edges, payload) {
+        const target = stage.querySelector('[data-mininet-pending-discovery]');
+        if (!target || !payload) {
+            return;
+        }
+
+        const mininet = payload.topology?.mininet || payload.mininet || payload;
+        const ryuNodeNames = new Set(nodes.map(node => normalizeNodeName(node.name || node.id)));
+        const mininetNodeNames = [
+            ...normalizeMininetNodeNames(payload.hosts || mininet.hosts),
+            ...normalizeMininetNodeNames(payload.switches || mininet.switches)
+        ];
+        const pendingNodes = [...new Set(mininetNodeNames.filter(name => name && !ryuNodeNames.has(name)))];
+        const ryuLinkNames = new Set(edges.map(edge => normalizeLinkPair(
+            edge.source || edge['source-h'] || edge['source-s'],
+            edge.target || edge['target-s'] || edge['target-h']
+        )));
+        const mininetLinks = Array.isArray(payload.links) ? payload.links : (Array.isArray(mininet.links) ? mininet.links : []);
+        const pendingLinks = mininetLinks
+            .map(normalizeMininetLinkPair)
+            .filter(Boolean)
+            .filter(pair => !ryuLinkNames.has(pair));
+
+        if (!pendingNodes.length && !pendingLinks.length) {
+            target.hidden = true;
+            target.innerHTML = '';
+            return;
+        }
+
+        const details = [];
+        if (pendingNodes.length) {
+            details.push(`Nodos pendientes: ${pendingNodes.join(', ')}.`);
+        }
+        if (pendingLinks.length) {
+            details.push(`Enlaces pendientes: ${[...new Set(pendingLinks)].join(', ')}.`);
+        }
+
+        target.hidden = false;
+        target.innerHTML = `
+            <i class="fas fa-clock-rotate-left"></i>
+            <div>
+                <strong>Mininet ya contiene cambios que Ryu todavia no ha descubierto.</strong>
+                <span>${escapeHtml(details.join(' '))} Apareceran en el mapa cuando se conecten y se genere trafico.</span>
+            </div>
+        `;
+    }
+
+    function normalizeMininetNodeNames(items) {
+        if (!Array.isArray(items)) {
+            return [];
+        }
+
+        return items
+            .map(item => normalizeNodeName(typeof item === 'string' ? item : item?.name || item?.id || item?.node))
+            .filter(Boolean);
+    }
+
+    function normalizeMininetLinkPair(link) {
+        if (typeof link === 'string') {
+            const names = link.match(/[hs]\d+/gi) || [];
+            return names.length >= 2 ? normalizeLinkPair(names[0], names[1]) : '';
+        }
+
+        if (!link || typeof link !== 'object') {
+            return '';
+        }
+
+        return normalizeLinkPair(
+            link.node1 || link.source || link['source-h'] || link['source-s'] || link.src?.node,
+            link.node2 || link.target || link['target-h'] || link['target-s'] || link.dst?.node
+        );
+    }
+
+    function normalizeLinkPair(left, right) {
+        const endpoints = [normalizeNodeName(left), normalizeNodeName(right)].filter(Boolean).sort();
+        return endpoints.length === 2 ? endpoints.join(' - ') : '';
     }
 
     function renderTopology(nodes, edges) {
@@ -374,6 +455,7 @@ import {
                 <i class="fas fa-circle-info"></i>
                 Los hosts se muestran cuando Ryu los descubre al generar o recibir trafico. Puedes arrastrar los nodos para recolocar el mapa.
             </div>
+            ${canManageLiveInventory ? '<div class="topology-pending-discovery" data-mininet-pending-discovery hidden></div>' : ''}
             <div class="topology-workspace">
                 <div class="topology-canvas">
                     <svg class="topology-map" viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="Topologia de red">
@@ -512,6 +594,14 @@ import {
             if (!positions[node.id]) {
                 positions[node.id] = pointOnRow(index, nodes.length, 100, width - 100, height / 2);
             }
+
+            const savedPosition = getSavedNodePosition(node.id);
+            if (savedPosition) {
+                positions[node.id] = {
+                    x: clamp(savedPosition.x, 70, width - 70),
+                    y: clamp(savedPosition.y, 72, height - 72)
+                };
+            }
         });
 
         return { width, height, positions };
@@ -534,6 +624,49 @@ import {
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    function getSavedNodePosition(nodeId) {
+        const key = nodePositionKey(nodeId);
+        if (!key) {
+            return null;
+        }
+
+        if (movedNodePositions.has(key)) {
+            return movedNodePositions.get(key);
+        }
+
+        try {
+            const saved = JSON.parse(localStorage.getItem(key) || 'null');
+            if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
+                movedNodePositions.set(key, saved);
+                return saved;
+            }
+        } catch (error) {
+            return null;
+        }
+
+        return null;
+    }
+
+    function saveNodePosition(nodeId, position) {
+        const key = nodePositionKey(nodeId);
+        if (!key) {
+            return;
+        }
+
+        movedNodePositions.set(key, position);
+        try {
+            localStorage.setItem(key, JSON.stringify(position));
+        } catch (error) {
+            // La posicion se conserva durante la sesion aunque el navegador no permita persistirla.
+        }
+    }
+
+    function nodePositionKey(nodeId) {
+        return currentServer && nodeId
+            ? `gestordered-node-position:${currentServer}:${nodeId}`
+            : '';
     }
 
     function findLinkedSwitch(hostId, edges) {
@@ -568,10 +701,12 @@ import {
 
         const isUp = isEdgeUp(edge);
         const isBlocked = isEdgeBlocked(edge);
-        const label = edge.type === 'host-link'
-            ? `${edge['s-iface'] || ''}`
-            : `${edge.src_iface || ''} - ${edge.dst_iface || ''}`;
+        const label = edge.type === 'host-link' ? `${edge['s-iface'] || ''}` : '';
+        const sourceLabel = edge.type === 'switch-link' ? `${edge.src_iface || ''}` : '';
+        const targetLabel = edge.type === 'switch-link' ? `${edge.dst_iface || ''}` : '';
         const labelPosition = getEdgeLabelPosition(source, target, edge.type, label, edge);
+        const sourceLabelPosition = getSwitchEdgeEndpointLabelPosition(source, target, 'source');
+        const targetLabelPosition = getSwitchEdgeEndpointLabelPosition(source, target, 'target');
 
         return `
             <g class="topology-edge ${isUp ? 'is-up' : 'is-down'} ${isBlocked ? 'is-blocked' : ''}"
@@ -580,11 +715,16 @@ import {
                data-source-id="${escapeHtml(sourceId)}"
                data-target-id="${escapeHtml(targetId)}"
                data-edge-type="${escapeHtml(edge.type)}"
-               data-switch-endpoint="${escapeHtml(getHostLinkSwitchEndpoint(edge, sourceId, targetId))}"
-               data-edge-label="${escapeHtml(label)}"
-               tabindex="0">
-                <line x1="${source.x}" y1="${source.y}" x2="${target.x}" y2="${target.y}"></line>
-                <text x="${labelPosition.x}" y="${labelPosition.y}">${escapeHtml(label)}</text>
+                data-switch-endpoint="${escapeHtml(getHostLinkSwitchEndpoint(edge, sourceId, targetId))}"
+                data-edge-label="${escapeHtml(label)}"
+                data-source-label="${escapeHtml(sourceLabel)}"
+                data-target-label="${escapeHtml(targetLabel)}"
+                tabindex="0">
+                 <line x1="${source.x}" y1="${source.y}" x2="${target.x}" y2="${target.y}"></line>
+                 ${edge.type === 'switch-link'
+                    ? `<text class="edge-endpoint-label is-source" x="${sourceLabelPosition.x}" y="${sourceLabelPosition.y}">${escapeHtml(sourceLabel)}</text>
+                       <text class="edge-endpoint-label is-target" x="${targetLabelPosition.x}" y="${targetLabelPosition.y}">${escapeHtml(targetLabel)}</text>`
+                    : `<text x="${labelPosition.x}" y="${labelPosition.y}">${escapeHtml(label)}</text>`}
             </g>
         `;
     }
@@ -621,6 +761,21 @@ import {
         return {
             x: midX + normalX * offset + (dx / length) * along * direction,
             y: midY + normalY * offset
+        };
+    }
+
+    function getSwitchEdgeEndpointLabelPosition(source, target, endpoint) {
+        const from = endpoint === 'source' ? source : target;
+        const to = endpoint === 'source' ? target : source;
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const length = Math.hypot(dx, dy) || 1;
+        const normalX = -dy / length;
+        const normalY = dx / length;
+
+        return {
+            x: from.x + (dx / length) * 76 + normalX * 18,
+            y: from.y + (dy / length) * 76 + normalY * 18
         };
     }
 
@@ -759,6 +914,7 @@ import {
             };
 
             positions[dragState.nodeId] = nextPosition;
+            saveNodePosition(dragState.nodeId, nextPosition);
             dragState.nodeElement.setAttribute('transform', `translate(${nextPosition.x} ${nextPosition.y})`);
             updateConnectedEdges(svg, dragState.nodeId, positions);
         });
@@ -795,18 +951,31 @@ import {
             }
 
             const line = edgeElement.querySelector('line');
-            const text = edgeElement.querySelector('text');
-            const labelPosition = getEdgeLabelPosition(source, target, edgeElement.dataset.edgeType, edgeElement.dataset.edgeLabel, {
-                'source-s': edgeElement.dataset.switchEndpoint === 'source' ? edgeElement.dataset.sourceId : '',
-                'target-s': edgeElement.dataset.switchEndpoint === 'target' ? edgeElement.dataset.targetId : ''
-            });
 
             line.setAttribute('x1', source.x);
             line.setAttribute('y1', source.y);
             line.setAttribute('x2', target.x);
             line.setAttribute('y2', target.y);
-            text.setAttribute('x', labelPosition.x);
-            text.setAttribute('y', labelPosition.y);
+
+            if (edgeElement.dataset.edgeType === 'switch-link') {
+                const sourceText = edgeElement.querySelector('.edge-endpoint-label.is-source');
+                const targetText = edgeElement.querySelector('.edge-endpoint-label.is-target');
+                const sourceLabelPosition = getSwitchEdgeEndpointLabelPosition(source, target, 'source');
+                const targetLabelPosition = getSwitchEdgeEndpointLabelPosition(source, target, 'target');
+                sourceText?.setAttribute('x', sourceLabelPosition.x);
+                sourceText?.setAttribute('y', sourceLabelPosition.y);
+                targetText?.setAttribute('x', targetLabelPosition.x);
+                targetText?.setAttribute('y', targetLabelPosition.y);
+                return;
+            }
+
+            const text = edgeElement.querySelector('text');
+            const labelPosition = getEdgeLabelPosition(source, target, edgeElement.dataset.edgeType, edgeElement.dataset.edgeLabel, {
+                'source-s': edgeElement.dataset.switchEndpoint === 'source' ? edgeElement.dataset.sourceId : '',
+                'target-s': edgeElement.dataset.switchEndpoint === 'target' ? edgeElement.dataset.targetId : ''
+            });
+            text?.setAttribute('x', labelPosition.x);
+            text?.setAttribute('y', labelPosition.y);
         });
     }
 
@@ -867,7 +1036,7 @@ import {
                 ${isSwitch ? '' : statusBadge(isNodeBlocked(node) ? 'Bloqueado' : 'Permitido', isNodeBlocked(node) ? 'is-danger' : 'is-success')}
             </div>
             ${readOnlyTopology ? '' : renderNodeIpTrafficControl(node)}
-            ${renderLiveInventoryDeleteControl(isSwitch ? 'switch' : 'host', title)}
+            ${renderLiveInventoryDeleteControl(isSwitch ? 'switch' : 'host')}
             ${detailSection('Identidad', [
                 ['ID', node.id],
                 ['Tipo', formatType(node.type)],
@@ -962,7 +1131,7 @@ import {
             </div>
             ${readOnlyTopology ? '' : renderEdgeStateControl(edge)}
             ${readOnlyTopology ? '' : renderEdgeDegradationControl(edge)}
-            ${renderLiveInventoryDeleteControl('link', title)}
+            ${renderLiveInventoryDeleteControl('link')}
             ${detailSection('Extremos', endpointRows)}
             ${detailSection('Estado operativo', [
                 ['Estado', formatState(edge.state)],
@@ -978,7 +1147,7 @@ import {
         `;
     }
 
-    function renderLiveInventoryDeleteControl(type, label) {
+    function renderLiveInventoryDeleteControl(type) {
         if (!canManageLiveInventory) {
             return '';
         }
@@ -991,14 +1160,13 @@ import {
 
         return `
             <section class="detail-section live-inventory-delete-section">
-                <h4>Inventario vivo</h4>
+                <h4>Modificar topologia</h4>
                 <button type="button"
                         class="contextual-action-button is-danger live-inventory-delete-button"
                         data-live-delete-trigger>
                     <i class="fas fa-trash"></i>
                     ${escapeHtml(labels[type] || 'Borrar elemento')}
                 </button>
-                <p class="edge-degradation-note">Vas a modificar Mininet en vivo: ${escapeHtml(label || 'elemento seleccionado')}.</p>
             </section>
         `;
     }

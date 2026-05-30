@@ -501,17 +501,44 @@ button {
 }
 
 .topology-live-inventory {
-    border-top: 1px solid #dbe3ef;
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    background: #f8fafc;
     display: grid;
-    gap: 14px;
-    padding-top: 14px;
+    gap: 16px;
+    margin-top: 18px;
+    padding: 16px;
 }
 
 .topology-live-inventory-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 12px;
+}
+
+.topology-live-inventory-title,
+.topology-live-inventory-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.topology-live-inventory-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.topology-live-inventory-title > span {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    background: #1e3c72;
+    color: #D4AF37;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
 }
 
 .topology-live-inventory-header p {
@@ -529,7 +556,7 @@ button {
     margin: 0;
 }
 
-.topology-live-inventory-header span {
+.topology-live-inventory-actions > span {
     border: 1px solid #dbe3ef;
     border-radius: 8px;
     color: #334155;
@@ -540,19 +567,19 @@ button {
     padding: 8px 10px;
 }
 
-.topology-live-inventory-header span.is-success {
+.topology-live-inventory-actions > span.is-success {
     background: #ecfdf3;
     border-color: rgba(22, 163, 74, 0.28);
     color: #166534;
 }
 
-.topology-live-inventory-header span.is-error {
+.topology-live-inventory-actions > span.is-error {
     background: #fff1f3;
     border-color: rgba(220, 38, 38, 0.28);
     color: #991b1b;
 }
 
-.topology-live-inventory-header span.is-pending {
+.topology-live-inventory-actions > span.is-pending {
     background: #fffbeb;
     border-color: rgba(212, 175, 55, 0.32);
     color: #7c5f10;
@@ -567,10 +594,14 @@ button {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
+    padding: 4px;
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    background: #ffffff;
 }
 
 .topology-inventory-tab {
-    border: 1px solid #dbe3ef;
+    border: 1px solid transparent;
     border-radius: 8px;
     background: #ffffff;
     color: #475569;
@@ -597,11 +628,11 @@ button {
 .topology-inventory-form {
     border: 1px solid #dbe3ef;
     border-radius: 8px;
-    background: #f8fafc;
+    background: #ffffff;
     display: none;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    padding: 14px;
+    gap: 12px;
+    padding: 16px;
 }
 
 .topology-inventory-form.is-active {
@@ -642,7 +673,7 @@ button {
 .topology-inventory-form input,
 .topology-inventory-form select {
     width: 100%;
-    min-height: 38px;
+    min-height: 42px;
     border: 2px solid #cbd5e1;
     border-radius: 8px;
     background: #ffffff;
@@ -656,6 +687,39 @@ button {
     outline: none;
     border-color: #D4AF37;
     box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16);
+}
+
+.topology-pending-discovery {
+    border: 1px solid rgba(212, 175, 55, 0.42);
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #475569;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 12px 0;
+    padding: 11px 12px;
+}
+
+.topology-pending-discovery[hidden] {
+    display: none;
+}
+
+.topology-pending-discovery i {
+    color: #b54708;
+    margin-top: 2px;
+}
+
+.topology-pending-discovery strong,
+.topology-pending-discovery span {
+    display: block;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.topology-pending-discovery strong {
+    color: #7c5f10;
+    margin-bottom: 2px;
 }
 
 .topology-action-feedback {
@@ -3376,9 +3440,15 @@ button {
         flex-direction: column;
     }
 
-    .topology-live-inventory-header span {
+    .topology-live-inventory-actions,
+    .topology-live-inventory-actions > span {
         max-width: none;
         width: 100%;
+    }
+
+    .topology-live-inventory-actions {
+        align-items: stretch;
+        flex-direction: column;
     }
 
     .operator-create-section,

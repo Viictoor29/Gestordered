@@ -372,7 +372,7 @@ function formatTimestamp(seconds) {
 
 function formatTopologyKind(kind) {
     const labels = {
-        mininet_live_topology: 'Topologia viva de Mininet'
+        mininet_live_topology: 'Topologia activa de Mininet'
     };
 
     return labels[kind] || kind || 'No disponible';

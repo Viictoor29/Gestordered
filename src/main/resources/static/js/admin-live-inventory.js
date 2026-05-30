@@ -7,12 +7,15 @@
     const MAX_HOST_NUMBER = 255;
     const FALLBACK_IPV4_PREFIX = 24;
     const MAX_SWITCH_PORT = 4096;
+    let pendingConfirmation = null;
 
     if (!root || !serverInput) {
         return;
     }
 
     bindInventoryTabs();
+    bindConfirmationModal();
+    bindClearTopologyAction();
 
     root.querySelectorAll('[data-inventory-form]').forEach(form => {
         form.addEventListener('submit', event => {
@@ -39,7 +42,7 @@
             return;
         }
 
-        if (!window.confirm(request.confirmMessage)) {
+        if (!await confirmRequest(request)) {
             return;
         }
 
@@ -153,12 +156,146 @@
         });
     }
 
+    function bindClearTopologyAction() {
+        const button = root.querySelector('[data-action="clear-live-topology"]');
+        if (!button) {
+            return;
+        }
+
+        button.addEventListener('click', async () => {
+            const serverUrl = getConnectedServerUrl();
+            if (!serverUrl) {
+                renderFeedback('Conecta primero con la API desde el panel de red.', 'is-error');
+                return;
+            }
+
+            const request = {
+                method: 'POST',
+                path: '/api/admin/mininet/topology/clear',
+                body: { notify_ryu: true },
+                title: 'Limpiar topología',
+                confirmMessage: 'Vas a eliminar todos los hosts, switches y enlaces de la topología activa.',
+                confirmNote: 'Esta accion es irreversible. Escribe CONFIRMAR para continuar.',
+                confirmPhrase: 'CONFIRMAR',
+                successMessage: 'Topología limpiada correctamente.'
+            };
+
+            if (!await confirmRequest(request)) {
+                return;
+            }
+
+            const originalHtml = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Limpiando';
+            try {
+                renderFeedback('Limpiando la topología activa...', 'is-pending');
+                await sendJson(proxyUrl(request.path, serverUrl), request.method, request.body);
+                renderFeedback(request.successMessage, 'is-success');
+                window.dispatchEvent(new CustomEvent('gestordered:refresh-live-network'));
+            } catch (error) {
+                renderFeedback(error.message || 'No se pudo limpiar la topología.', 'is-error');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalHtml;
+            }
+        });
+    }
+
+    function bindConfirmationModal() {
+        const modal = document.getElementById('network-change-modal');
+        const form = modal?.querySelector('[data-network-change-form]');
+
+        if (!modal || !form) {
+            return;
+        }
+
+        modal.querySelectorAll('[data-action="close-network-change"]').forEach(button => {
+            button.addEventListener('click', () => closeConfirmationModal(false));
+        });
+
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+            const confirmation = String(new FormData(form).get('confirmation') || '').trim();
+            const requiredPhrase = pendingConfirmation?.request?.confirmPhrase;
+
+            if (requiredPhrase && confirmation !== requiredPhrase) {
+                setConfirmationFeedback(`Escribe ${requiredPhrase} para continuar.`, 'is-error');
+                return;
+            }
+
+            closeConfirmationModal(true);
+        });
+    }
+
+    function confirmRequest(request) {
+        const modal = document.getElementById('network-change-modal');
+        const title = modal?.querySelector('[data-network-change-title]');
+        const summary = modal?.querySelector('[data-network-change-summary]');
+        const note = modal?.querySelector('[data-network-change-note]');
+        const wrapper = modal?.querySelector('[data-network-change-confirmation-wrapper]');
+        const input = wrapper?.querySelector('input[name="confirmation"]');
+        const submit = modal?.querySelector('[data-network-change-submit]');
+
+        if (!modal || !title || !summary || !note || !wrapper || !input || !submit) {
+            renderFeedback('No se pudo abrir la confirmacion del cambio.', 'is-error');
+            return Promise.resolve(false);
+        }
+
+        if (pendingConfirmation) {
+            pendingConfirmation.resolve(false);
+        }
+
+        title.textContent = request.title || 'Confirmar cambio';
+        summary.textContent = request.confirmMessage || 'Vas a modificar la topología activa.';
+        note.textContent = request.confirmNote || 'Revisa el cambio antes de continuar.';
+        wrapper.hidden = !request.confirmPhrase;
+        input.required = Boolean(request.confirmPhrase);
+        input.value = '';
+        submit.classList.toggle('btn-panel-danger', Boolean(request.confirmPhrase));
+        submit.innerHTML = request.confirmPhrase
+            ? '<i class="fas fa-eraser"></i> Limpiar definitivamente'
+            : '<i class="fas fa-check"></i> Confirmar cambio';
+        setConfirmationFeedback('', '');
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        window.setTimeout(() => (request.confirmPhrase ? input : submit).focus(), 0);
+
+        return new Promise(resolve => {
+            pendingConfirmation = { request, resolve };
+        });
+    }
+
+    function closeConfirmationModal(result) {
+        const modal = document.getElementById('network-change-modal');
+        const form = modal?.querySelector('[data-network-change-form]');
+        modal?.classList.remove('is-open');
+        modal?.setAttribute('aria-hidden', 'true');
+        form?.reset();
+
+        const confirmation = pendingConfirmation;
+        pendingConfirmation = null;
+        confirmation?.resolve(Boolean(result));
+    }
+
+    function setConfirmationFeedback(message, className) {
+        const feedback = document.querySelector('[data-network-change-feedback]');
+        if (!feedback) {
+            return;
+        }
+
+        feedback.textContent = message;
+        feedback.classList.remove('is-error', 'is-success', 'is-pending');
+        if (className) {
+            feedback.classList.add(className);
+        }
+    }
+
     async function loadMininetInventory(serverUrl) {
         try {
             const payload = await fetchJson(proxyUrl('/api/admin/mininet/topology/export', serverUrl));
             return normalizeInventory(payload);
         } catch (error) {
-            throw new Error('No se pudo leer la topologia viva de Mininet para validar nombres, IPs y puertos.');
+            throw new Error('No se pudo leer la topologia activa de Mininet para validar nombres, IPs y puertos.');
         }
     }
 
@@ -279,7 +416,7 @@
 
     function collectLinks(target, value) {
         asArray(value).forEach(link => {
-            if (link && typeof link === 'object') {
+            if (link && (typeof link === 'object' || typeof link === 'string')) {
                 target.push(link);
             }
         });
@@ -334,6 +471,10 @@
     }
 
     function registerLinkPorts(usage, link) {
+        if (!link || typeof link !== 'object') {
+            return;
+        }
+
         const sourceSwitch = normalizeNodeName(link['source-s'] || link.source_s || link.src?.node || link.source || link.src || link.node1);
         const targetSwitch = normalizeNodeName(link['target-s'] || link.target_s || link.dst?.node || link.target || link.dst || link.node2);
         const sourcePort = numberOrUndefined(link['s-port'] ?? link.s_port ?? link.src?.port_no ?? link.src_port ?? link.port1);
@@ -358,6 +499,34 @@
         usage.get(switchName).add(port);
     }
 
+    function ensureLinkDoesNotExist(node1, node2, links) {
+        const candidate = normalizeLinkPair(node1, node2);
+        const exists = links
+            .map(normalizeInventoryLinkPair)
+            .some(pair => pair && pair === candidate);
+
+        if (exists) {
+            throw new Error(`Ya existe un enlace entre ${node1} y ${node2}.`);
+        }
+    }
+
+    function normalizeInventoryLinkPair(link) {
+        if (typeof link === 'string') {
+            const names = link.match(/[hs]\d+/gi) || [];
+            return names.length >= 2 ? normalizeLinkPair(names[0], names[1]) : '';
+        }
+
+        return normalizeLinkPair(
+            link?.node1 || link?.source || link?.['source-h'] || link?.['source-s'] || link?.src?.node,
+            link?.node2 || link?.target || link?.['target-h'] || link?.['target-s'] || link?.dst?.node
+        );
+    }
+
+    function normalizeLinkPair(node1, node2) {
+        const endpoints = [normalizeNodeName(node1), normalizeNodeName(node2)].filter(Boolean).sort();
+        return endpoints.length === 2 ? endpoints.join(' - ') : '';
+    }
+
     function buildAutocompletedLink(rawNode1, rawNode2, inventory) {
         const first = classifyNode(rawNode1, inventory);
         const second = classifyNode(rawNode2, inventory);
@@ -373,6 +542,8 @@
         if (first.kind === 'host' && second.kind === 'host') {
             throw new Error('No se puede crear un enlace directo host-host. Usa host-switch o switch-switch.');
         }
+
+        ensureLinkDoesNotExist(first.name, second.name, inventory.links);
 
         if (first.kind === 'host' || second.kind === 'host') {
             const host = first.kind === 'host' ? first.name : second.name;

@@ -7,10 +7,10 @@
     <link rel="icon" type="image/png" href="/img/logo.png?v=20260526">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/dashboard.css?v=20260530-admin-inventory-autofill">
-    <script type="module" src="/js/network-dashboard.js?v=20260529-draggable-topology" defer></script>
+    <link rel="stylesheet" href="/css/dashboard.css?v=20260531-topology-editor">
+    <script type="module" src="/js/network-dashboard.js?v=20260531-topology-editor" defer></script>
     <script type="module" src="/js/admin-topologies.js?v=20260529-draggable-topology" defer></script>
-    <script type="module" src="/js/admin-live-inventory.js?v=20260530-admin-inventory-autofill" defer></script>
+    <script type="module" src="/js/admin-live-inventory.js?v=20260531-topology-editor" defer></script>
 </head>
 <body class="dashboard-page">
     <div class="dashboard-shell">
@@ -192,11 +192,20 @@
 
                     <div class="topology-live-inventory" data-admin-live-inventory th:if="${isAdmin}">
                         <div class="topology-live-inventory-header">
-                            <div>
-                                <p>Inventario vivo</p>
-                                <h4>Añadir hosts, switches y enlaces</h4>
+                            <div class="topology-live-inventory-title">
+                                <span><i class="fas fa-pen-to-square"></i></span>
+                                <div>
+                                    <p>Administracion</p>
+                                    <h4>Modificar topología</h4>
+                                </div>
                             </div>
-                            <span data-admin-inventory-feedback hidden></span>
+                            <div class="topology-live-inventory-actions">
+                                <button type="button" class="btn-panel btn-panel-danger" data-action="clear-live-topology">
+                                    <i class="fas fa-eraser"></i>
+                                    Limpiar topología
+                                </button>
+                                <span data-admin-inventory-feedback hidden></span>
+                            </div>
                         </div>
 
                         <div class="topology-inventory-tabs">
@@ -427,7 +436,7 @@
 
                     <form class="operator-request-form" data-network-delete-form>
                         <p class="reject-modal-target" data-network-delete-summary>Selecciona un elemento de la topologia.</p>
-                        <p class="account-request-note">Esta accion modifica Mininet en vivo. Escribe CONFIRMAR para continuar.</p>
+                        <p class="account-request-note">Esta accion modifica la topología activa. Escribe CONFIRMAR para continuar.</p>
                         <label>
                             Confirmacion
                             <input type="text" name="confirmation" autocomplete="off" placeholder="CONFIRMAR" required>
@@ -438,6 +447,38 @@
                             <button type="submit" class="btn-panel btn-panel-danger">
                                 <i class="fas fa-trash"></i>
                                 Borrar definitivamente
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+
+            <div class="account-request-modal" id="network-change-modal" aria-hidden="true" th:if="${isAdmin}">
+                <div class="account-request-backdrop" data-action="close-network-change"></div>
+                <section class="account-request-dialog request-status-dialog" role="dialog" aria-modal="true" aria-labelledby="network-change-title">
+                    <div class="panel-header">
+                        <div>
+                            <p>Modificar topología</p>
+                            <h2 id="network-change-title" data-network-change-title>Confirmar cambio</h2>
+                        </div>
+                        <button type="button" class="modal-close-button" data-action="close-network-change" aria-label="Cerrar confirmacion">
+                            <i class="fas fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <form class="operator-request-form" data-network-change-form>
+                        <p class="reject-modal-target" data-network-change-summary></p>
+                        <p class="account-request-note" data-network-change-note></p>
+                        <label data-network-change-confirmation-wrapper hidden>
+                            Confirmacion
+                            <input type="text" name="confirmation" autocomplete="off" placeholder="CONFIRMAR">
+                        </label>
+                        <p class="account-request-feedback" data-network-change-feedback></p>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-panel btn-panel-secondary" data-action="close-network-change">Cancelar</button>
+                            <button type="submit" class="btn-panel" data-network-change-submit>
+                                <i class="fas fa-check"></i>
+                                Confirmar
                             </button>
                         </div>
                     </form>
