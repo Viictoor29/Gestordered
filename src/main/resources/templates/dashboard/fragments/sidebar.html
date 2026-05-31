@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <th:block th:fragment="sidebar">
+        <aside class="dashboard-sidebar">
+            <a href="/dashboard" class="dashboard-brand">
+                <span class="dashboard-brand-icon"><i class="fas fa-network-wired"></i></span>
+                <span>Gestor de Red</span>
+            </a>
+
+            <a href="/dashboard/profile"
+               class="dashboard-user-card"
+               th:classappend="${activeSection == 'profile'} ? ' active' : ''"
+               aria-label="Ver mi perfil">
+                <div class="dashboard-avatar" th:text="${avatarInitial}">U</div>
+                <div>
+                    <strong th:text="${displayName}">Usuario</strong>
+                    <span th:text="${roleLabel}">Operador</span>
+                </div>
+            </a>
+
+            <nav class="dashboard-nav" aria-label="Menu principal">
+                <a href="/dashboard"
+                   th:classappend="${activeSection == 'network'} ? ' active' : ''">
+                    <i class="fas fa-diagram-project"></i><span>Topología</span>
+                </a>
+                <a href="/dashboard"
+                   th:unless="${isAdmin}"
+                   th:data-action="${hasPendingUserRoleRequest} ? 'open-operator-pending' : 'open-operator-request'"
+                   th:title="${hasPendingUserRoleRequest} ? 'Ya tienes una solicitud pendiente' : 'Solicitar permisos'">
+                    <i class="fas fa-paper-plane"></i><span>Solicitar permisos</span>
+                </a>
+                <a href="/dashboard"
+                   th:unless="${isAdmin}"
+                   data-action="open-operator-status">
+                    <i class="fas fa-list-check"></i><span>Ver peticiones</span>
+                </a>
+                <a href="/dashboard/admin"
+                   th:if="${isAdmin}"
+                   th:classappend="${activeSection == 'admin'} ? ' active' : ''">
+                    <i class="fas fa-list-check"></i><span>Peticiones</span>
+                </a>
+                <a href="/dashboard/topologies"
+                   th:if="${isAdmin}"
+                   th:classappend="${activeSection == 'topologies'} ? ' active' : ''">
+                    <i class="fas fa-database"></i><span>Topologias BD</span>
+                </a>
+                <a href="/dashboard/operators"
+                   th:if="${isAdmin}"
+                   th:classappend="${activeSection == 'operators'} ? ' active' : ''">
+                    <i class="fas fa-user-gear"></i><span>Operadores</span>
+                </a>
+            </nav>
+
+            <form action="/logout" method="POST" class="dashboard-logout">
+                <button type="submit"><i class="fas fa-right-from-bracket"></i><span>Cerrar sesion</span></button>
+            </form>
+        </aside>
+    </th:block>
+</body>
+</html>

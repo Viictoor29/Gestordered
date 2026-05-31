@@ -1,0 +1,239 @@
+@media (max-width: 900px) {
+    .dashboard-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-sidebar {
+        position: static;
+        height: auto;
+    }
+
+    .dashboard-nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-grid-stats,
+    .dashboard-content-grid,
+    .guest-dashboard-grid,
+    .guest-dashboard-layout,
+    .topology-workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .topology-meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .network-status-summary,
+    .health-summary-grid,
+    .network-status-details {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .server-form {
+        grid-template-columns: 1fr auto;
+    }
+
+    .role-request-filters,
+    .role-request-data,
+    .operators-layout,
+    .topologies-layout,
+    .topology-live-grid,
+    .topology-apply-device,
+    .topology-inventory-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .role-request-filters .btn-panel {
+        width: 100%;
+    }
+}
+
+@media (max-width: 780px) {
+    .dashboard-main {
+        padding: 22px;
+    }
+
+    .dashboard-topbar,
+    .panel-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .role-badge,
+    .btn-panel {
+        width: 100%;
+    }
+
+    .profile-form-section {
+        grid-template-columns: 1fr;
+    }
+
+    .account-request-form {
+        grid-template-columns: 1fr;
+    }
+
+    .server-form {
+        grid-template-columns: 1fr;
+    }
+
+    .role-request-filters,
+    .role-request-data,
+    .operators-layout,
+    .topologies-layout,
+    .topology-live-grid,
+    .topology-apply-device,
+    .topology-inventory-form,
+    .permission-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .topology-live-inventory-header {
+        flex-direction: column;
+    }
+
+    .topology-live-inventory-actions,
+    .topology-live-inventory-actions > span {
+        max-width: none;
+        width: 100%;
+    }
+
+    .topology-live-inventory-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .operator-create-section,
+    .topology-upload-section {
+        border-right: none;
+        border-bottom: 1px solid #dbe3ef;
+        padding-right: 0;
+        padding-bottom: 20px;
+    }
+
+    .role-request-header,
+    .operator-item,
+    .operator-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .role-request-actions .btn-panel {
+        width: 100%;
+    }
+
+    .topology-db-item .role-request-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .topology-db-item .role-request-actions .btn-panel {
+        width: 100%;
+    }
+
+    .topology-view-card {
+        min-height: 430px;
+    }
+
+    .topology-view-card .empty-state {
+        min-height: 320px;
+    }
+
+    .topology-stage {
+        min-height: 320px;
+    }
+
+    .topology-map {
+        height: min(var(--topology-panel-height), 420px);
+        min-height: min(var(--topology-panel-height), 420px);
+    }
+
+    .topology-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .network-status-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .network-status-tablist {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .network-status-summary,
+    .health-summary-grid,
+    .health-switch-stats,
+    .health-port-data,
+    .stp-switch-details,
+    .traffic-form,
+    .traffic-form-compact,
+    .traffic-result-grid,
+    .network-status-details {
+        grid-template-columns: 1fr;
+    }
+
+.health-switch-header,
+.health-port-main,
+.traffic-result-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .topology-detail {
+        height: min(var(--topology-panel-height), 420px);
+        min-height: min(var(--topology-panel-height), 420px);
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-sidebar {
+        padding: 18px;
+    }
+
+    .dashboard-nav {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-user-card {
+        align-items: flex-start;
+    }
+
+    .dashboard-main {
+        padding: 16px;
+    }
+
+    .dashboard-topbar h1 {
+        font-size: 1.55rem;
+    }
+
+    .panel-card {
+        padding: 18px;
+    }
+
+    .stat-card {
+        align-items: flex-start;
+    }
+
+    .account-request-dialog {
+        padding: 18px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+}
+
+.topology-inventory-help {
+    align-self: end;
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 800;
+    line-height: 1.35;
+    margin: 0;
+    padding: 8px 10px;
+}

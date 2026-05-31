@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <th:block th:fragment="topologies">
+            <section id="topologies" class="dashboard-content-grid" th:if="${activeSection == 'topologies'}">
+                <article class="dashboard-card panel-card topologies-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p>Base de datos</p>
+                            <h2>Topologias guardadas</h2>
+                        </div>
+                        <span class="role-badge" th:text="${#lists.size(topologies)} + ' guardadas'">0 guardadas</span>
+                    </div>
+
+                    <p class="account-request-feedback is-success" th:if="${topologySuccess}" th:text="${topologySuccess}"></p>
+                    <p class="account-request-feedback is-error" th:if="${topologyError}" th:text="${topologyError}"></p>
+                    <p class="account-request-feedback" data-admin-topology-feedback hidden></p>
+
+                    <div class="topologies-layout">
+                        <section class="topology-upload-section">
+                            <div class="profile-section-heading">
+                                <span><i class="fas fa-upload"></i></span>
+                                <div>
+                                    <p>Importar</p>
+                                    <h3>Subir JSON</h3>
+                                </div>
+                            </div>
+
+                            <form class="operator-form topology-upload-form" method="post" action="/dashboard/topologies/upload" enctype="multipart/form-data">
+                                <label class="topology-field">
+                                    Nombre
+                                    <input type="text" name="name" placeholder="Nombre de la topologia" minlength="3" maxlength="80">
+                                </label>
+                                <label class="topology-field">
+                                    Descripcion
+                                    <input type="text" name="description" placeholder="Descripcion breve" maxlength="240">
+                                </label>
+                                <div class="topology-file-field">
+                                    <span>Archivo JSON</span>
+                                    <label class="topology-file-drop">
+                                        <input type="file" name="file" accept="application/json,.json" required data-topology-file-input>
+                                        <i class="fas fa-file-arrow-up"></i>
+                                        <strong data-topology-file-name>Seleccionar JSON</strong>
+                                        <small>El nombre y la descripcion se pueden leer del archivo si los dejas vacios.</small>
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn-panel">
+                                    <i class="fas fa-upload"></i>
+                                    Subir topologia
+                                </button>
+                            </form>
+                        </section>
+
+                        <section class="topology-list-section">
+                            <div class="profile-section-heading">
+                                <span><i class="fas fa-database"></i></span>
+                                <div>
+                                    <p>Repositorio</p>
+                                    <h3>Topologias en MongoDB</h3>
+                                </div>
+                            </div>
+
+                            <div class="topology-db-list" th:if="${!#lists.isEmpty(topologies)}">
+                                <article class="topology-db-item" th:each="topology : ${topologies}">
+                                    <div class="topology-db-main">
+                                        <span class="detail-icon"><i class="fas fa-diagram-project"></i></span>
+                                        <div>
+                                            <h3 th:text="${topology.name}">Topologia</h3>
+                                            <p th:text="${#strings.isEmpty(topology.description)} ? 'Sin descripcion' : ${topology.description}">Descripcion</p>
+                                        </div>
+                                    </div>
+
+                                    <dl class="role-request-data topology-db-data">
+                                        <div><dt>Nodos</dt><dd th:text="${topology.nodes}">0</dd></div>
+                                        <div><dt>Enlaces</dt><dd th:text="${topology.edges}">0</dd></div>
+                                        <div><dt>Creada</dt><dd th:text="${topology.createdAt != null ? #dates.format(T(java.util.Date).from(topology.createdAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
+                                        <div><dt>Actualizada</dt><dd th:text="${topology.updatedAt != null ? #dates.format(T(java.util.Date).from(topology.updatedAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
+                                    </dl>
+
+                                    <div class="role-request-actions">
+                                        <button type="button"
+                                                class="btn-panel btn-panel-secondary"
+                                                data-action="open-topology-json"
+                                                th:data-topology-name="${topology.name}">
+                                            <i class="fas fa-eye"></i>
+                                            Ver JSON
+                                        </button>
+                                        <textarea class="topology-json-source" data-topology-json th:text="${topology.json}" hidden>{}</textarea>
+                                        <a class="btn-panel btn-panel-secondary" th:href="@{/dashboard/topologies/{id}/download(id=${topology.id})}">
+                                            <i class="fas fa-download"></i>
+                                            Descargar JSON
+                                        </a>
+                                        <button type="button"
+                                                class="btn-panel"
+                                                data-action="apply-db-topology"
+                                                th:data-topology-name="${topology.name}">
+                                            <i class="fas fa-play"></i>
+                                            Importar
+                                        </button>
+                                        <button type="button"
+                                                class="btn-panel btn-panel-danger"
+                                                data-action="open-topology-delete"
+                                                th:data-delete-action="@{/dashboard/topologies/{id}/delete(id=${topology.id})}"
+                                                th:data-topology-name="${topology.name}">
+                                            <i class="fas fa-trash"></i>
+                                            Borrar
+                                        </button>
+                                    </div>
+                                </article>
+                            </div>
+
+                            <div class="empty-state compact-empty-state" th:if="${#lists.isEmpty(topologies)}">
+                                <i class="fas fa-database"></i>
+                                <h3>No hay topologias guardadas</h3>
+                                <p>Sube un archivo JSON para guardarlo en la base de datos.</p>
+                            </div>
+                        </section>
+                    </div>
+
+                    <section class="topology-live-actions" data-admin-topology-actions>
+                        <div class="profile-section-heading">
+                            <span><i class="fas fa-network-wired"></i></span>
+                            <div>
+                                <p>Topologia activa</p>
+                                <h3>Acciones sobre la red</h3>
+                            </div>
+                        </div>
+                        <div class="topology-live-grid">
+                            <label class="topology-field">
+                                Servidor API
+                                <input type="text" data-admin-topology-server placeholder="Ej. 192.168.56.104:8080" autocomplete="off">
+                            </label>
+                            <label class="topology-field">
+                                Nombre para BD
+                                <input type="text" data-save-current-name placeholder="Nombre de la topologia" minlength="3" maxlength="80">
+                            </label>
+                            <label class="topology-field">
+                                Descripcion
+                                <input type="text" data-save-current-description placeholder="Descripcion breve" maxlength="240">
+                            </label>
+                            <button type="button" class="btn-panel" data-action="save-current-topology">
+                                <i class="fas fa-database"></i>
+                                Guardar activa en BD
+                            </button>
+                        </div>
+                        <div class="topology-apply-device">
+                            <div class="topology-file-field">
+                                <span>Importar desde dispositivo</span>
+                                <label class="topology-file-drop">
+                                    <input type="file" accept="application/json,.json" data-apply-topology-file>
+                                    <i class="fas fa-file-import"></i>
+                                    <strong data-apply-topology-file-name>Seleccionar JSON</strong>
+                                    <small>Tambien puedes arrastrar y soltar el archivo para aplicarlo en la red.</small>
+                                </label>
+                            </div>
+                            <button type="button" class="btn-panel btn-panel-secondary" data-action="apply-device-topology">
+                                <i class="fas fa-play"></i>
+                                Importar archivo en la red
+                            </button>
+                        </div>
+
+                    </section>
+                </article>
+
+                <div class="account-request-modal" id="topology-json-modal" aria-hidden="true">
+                    <div class="account-request-backdrop" data-action="close-topology-json"></div>
+                    <section class="account-request-dialog topology-json-dialog" role="dialog" aria-modal="true" aria-labelledby="topology-json-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Contenido JSON</p>
+                                <h2 id="topology-json-title">Topologia</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-topology-json" aria-label="Cerrar JSON">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+                        <pre class="topology-json-modal-content" id="topology-json-content">{}</pre>
+                    </section>
+                </div>
+
+                <div class="account-request-modal"
+                     id="topology-delete-modal"
+                     th:classappend="${topologyDeleteError} ? ' is-open' : ''"
+                     th:attr="aria-hidden=${topologyDeleteError} ? 'false' : 'true'">
+                    <div class="account-request-backdrop" data-action="close-topology-delete"></div>
+                    <section class="account-request-dialog request-status-dialog" role="dialog" aria-modal="true" aria-labelledby="topology-delete-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Confirmacion requerida</p>
+                                <h2 id="topology-delete-title">Eliminar topologia</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-topology-delete" aria-label="Cerrar borrado">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <form class="operator-request-form" id="topology-delete-form" method="post" th:action="${topologyDeleteAction}">
+                            <p class="reject-modal-target"
+                               id="topology-delete-target"
+                               th:text="${topologyDeleteName != null ? 'Vas a eliminar la topologia ' + topologyDeleteName + '.' : 'Topologia seleccionada'}">Topologia seleccionada</p>
+                            <p class="account-request-feedback is-error" th:if="${topologyDeleteError}" th:text="${topologyDeleteError}"></p>
+                            <label>
+                                Contraseña del administrador
+                                <span class="profile-password-field">
+                                    <input type="password" name="adminPassword" autocomplete="current-password" required>
+                                    <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </span>
+                            </label>
+                            <div class="modal-actions">
+                                <button type="button" class="btn-panel btn-panel-secondary" data-action="close-topology-delete">Cancelar</button>
+                                <button type="submit" class="btn-panel btn-panel-danger">
+                                    <i class="fas fa-trash"></i>
+                                    Eliminar
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            </section>
+    </th:block>
+</body>
+</html>

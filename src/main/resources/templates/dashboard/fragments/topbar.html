@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <th:block th:fragment="topbar">
+            <header class="dashboard-topbar">
+                <div>
+                    <p th:text="${dashboardSubtitle}">Panel de control</p>
+                    <h1 th:text="${dashboardTitle}">Panel</h1>
+                </div>
+                <span class="role-badge" th:text="${roleLabel}">Operador</span>
+            </header>
+    </th:block>
+</body>
+</html>

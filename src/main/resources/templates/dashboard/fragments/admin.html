@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <th:block th:fragment="admin">
+            <section id="admin" class="dashboard-content-grid" th:if="${activeSection == 'admin'}">
+                <article class="dashboard-card panel-card admin-panel role-requests-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 id="requests-admin">Peticiones de acceso</h2>
+                        </div>
+                        <span class="role-badge" th:text="${pendingRoleRequests} + ' pendientes'">0 pendientes</span>
+                    </div>
+
+                    <p class="account-request-feedback is-success" th:if="${adminRequestSuccess}" th:text="${adminRequestSuccess}"></p>
+                    <p class="account-request-feedback is-error" th:if="${adminRequestError}" th:text="${adminRequestError}"></p>
+
+                    <form class="role-request-filters" method="get" action="/dashboard/admin">
+                        <label>
+                            Estado
+                            <select name="requestStatus">
+                                <option value="" th:selected="${requestStatus == ''}">Todos</option>
+                                <option value="PENDING" th:selected="${requestStatus == 'PENDING'}">Pendientes</option>
+                                <option value="APPROVED" th:selected="${requestStatus == 'APPROVED'}">Aprobadas</option>
+                                <option value="REJECTED" th:selected="${requestStatus == 'REJECTED'}">Rechazadas</option>
+                            </select>
+                        </label>
+                        <label>
+                            Rol solicitado
+                            <select name="requestedRole">
+                                <option value="" th:selected="${requestedRole == ''}">Todos</option>
+                                <option value="OPERATOR" th:selected="${requestedRole == 'OPERATOR'}">Operador</option>
+                                <option value="ADMIN" th:selected="${requestedRole == 'ADMIN'}">Administrador</option>
+                            </select>
+                        </label>
+                        <label>
+                            Rol actual
+                            <select name="currentRole">
+                                <option value="" th:selected="${currentRole == ''}">Todos</option>
+                                <option value="GUEST" th:selected="${currentRole == 'GUEST'}">Invitado</option>
+                                <option value="OPERATOR" th:selected="${currentRole == 'OPERATOR'}">Operador</option>
+                            </select>
+                        </label>
+                        <label>
+                            Buscar
+                            <input type="search" name="requestSearch" placeholder="Nombre, usuario, email, DNI..." th:value="${requestSearch}">
+                        </label>
+                        <button type="submit" class="btn-panel">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                    </form>
+
+                    <div class="request-admin-summary">
+                        <span><strong th:text="${visibleRoleRequests}">0</strong> visibles</span>
+                        <span><strong th:text="${pendingRoleRequests}">0</strong> pendientes totales</span>
+                    </div>
+
+                    <div class="role-request-list" th:if="${!#lists.isEmpty(roleRequests)}">
+                        <article class="role-request-item" th:each="request : ${roleRequests}">
+                            <div class="role-request-header">
+                                <div>
+                                    <p th:text="${(request.currentRole == 'ADMIN' ? 'Administrador' : (request.currentRole == 'OPERATOR' ? 'Operador' : 'Invitado')) + ' -> ' + (request.requestedRole == 'ADMIN' ? 'Administrador' : (request.requestedRole == 'GUEST' ? 'Invitado' : 'Operador'))}">Invitado -> Operador</p>
+                                    <h3 th:text="${request.fullName ?: request.username}">Nombre completo</h3>
+                                </div>
+                                <span class="detail-badge"
+                                      th:classappend="${request.status == 'APPROVED'} ? ' is-success' : (${request.status == 'REJECTED'} ? ' is-danger' : ' is-warning')"
+                                      th:text="${request.status == 'APPROVED'} ? 'Aprobada' : (${request.status == 'REJECTED'} ? 'Rechazada' : 'Pendiente')">Pendiente</span>
+                            </div>
+
+                            <dl class="role-request-data">
+                                <div><dt>Usuario</dt><dd th:text="${request.username ?: 'Sin indicar'}">usuario</dd></div>
+                                <div><dt>Email</dt><dd th:text="${request.email ?: 'Sin indicar'}">email</dd></div>
+                                <div><dt>DNI</dt><dd th:text="${request.dni ?: 'Sin indicar'}">dni</dd></div>
+                                <div><dt>Telefono</dt><dd th:text="${request.phone ?: 'Sin indicar'}">telefono</dd></div>
+                                <div><dt>Rol actual</dt><dd th:text="${request.currentRole == 'ADMIN' ? 'Administrador' : (request.currentRole == 'OPERATOR' ? 'Operador' : 'Invitado')}">Invitado</dd></div>
+                                <div><dt>Rol solicitado</dt><dd th:text="${request.requestedRole == 'ADMIN' ? 'Administrador' : (request.requestedRole == 'GUEST' ? 'Invitado' : 'Operador')}">Operador</dd></div>
+                                <div><dt>Creada</dt><dd th:text="${request.createdAt != null ? #dates.format(T(java.util.Date).from(request.createdAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
+                                <div><dt>Revisada</dt><dd th:text="${request.reviewedAt != null ? #dates.format(T(java.util.Date).from(request.reviewedAt), 'dd/MM/yyyy HH:mm') : 'Pendiente'}">pendiente</dd></div>
+                            </dl>
+
+                            <div class="role-request-reason">
+                                <strong>Motivo</strong>
+                                <p th:text="${#strings.isEmpty(request.reason)} ? 'Sin motivo indicado.' : ${request.reason}">Motivo</p>
+                            </div>
+
+                            <div class="role-request-reason is-rejection" th:if="${request.status == 'REJECTED'}">
+                                <strong>Justificación del rechazo</strong>
+                                <p th:text="${#strings.isEmpty(request.rejectionReason)} ? 'Sin justificación registrada.' : ${request.rejectionReason}">Justificacion</p>
+                            </div>
+
+                            <div class="role-request-actions" th:if="${request.status == 'PENDING'}">
+                                <form th:action="@{/admin/role-requests/{id}/approve(id=${request.id})}" method="post">
+                                    <button type="submit" class="btn-panel">
+                                        <i class="fas fa-check"></i>
+                                        Aceptar
+                                    </button>
+                                </form>
+                                <button type="button"
+                                        class="btn-panel btn-panel-danger"
+                                        data-action="open-admin-reject"
+                                        th:data-reject-action="@{/admin/role-requests/{id}/reject(id=${request.id})}"
+                                        th:data-request-name="${request.fullName ?: request.username}">
+                                    <i class="fas fa-xmark"></i>
+                                    Rechazar
+                                </button>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="empty-state compact-empty-state" th:if="${#lists.isEmpty(roleRequests)}">
+                        <i class="fas fa-list-check"></i>
+                        <h3>No hay solicitudes con esos filtros</h3>
+                        <p>Cambia el estado, el rol o la busqueda para ver otras peticiones.</p>
+                    </div>
+                </article>
+
+                <div class="account-request-modal" id="admin-reject-modal" aria-hidden="true">
+                    <div class="account-request-backdrop" data-action="close-admin-reject"></div>
+                    <section class="account-request-dialog request-status-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-reject-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Revisión de solicitud</p>
+                                <h2 id="admin-reject-title">Justificar rechazo</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-admin-reject" aria-label="Cerrar rechazo">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <form class="operator-request-form" id="admin-reject-form" method="post">
+                            <p class="reject-modal-target" id="admin-reject-target">Solicitud seleccionada</p>
+                            <label>
+                                Justificación
+                                <textarea name="rejectionReason" rows="5" maxlength="500" placeholder="Indica por qué se rechaza la petición" required></textarea>
+                            </label>
+                            <div class="modal-actions">
+                                <button type="button" class="btn-panel btn-panel-secondary" data-action="close-admin-reject">Cancelar</button>
+                                <button type="submit" class="btn-panel btn-panel-danger">
+                                    <i class="fas fa-xmark"></i>
+                                    Rechazar
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            </section>
+    </th:block>
+</body>
+</html>

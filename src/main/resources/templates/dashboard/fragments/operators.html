@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <th:block th:fragment="operators">
+            <section id="operators" class="dashboard-content-grid" th:if="${activeSection == 'operators'}">
+                <article class="dashboard-card panel-card operators-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p>Administracion</p>
+                            <h2>Operadores</h2>
+                        </div>
+                        <span class="role-badge" th:text="${#lists.size(operators)} + ' registrados'">0 registrados</span>
+                    </div>
+
+                    <p class="account-request-feedback is-success" th:if="${operatorSuccess}" th:text="${operatorSuccess}"></p>
+                    <p class="account-request-feedback is-error" th:if="${operatorError}" th:text="${operatorError}"></p>
+
+                    <div class="operators-layout">
+                        <section class="operator-create-section">
+                            <div class="profile-section-heading">
+                                <span><i class="fas fa-user-plus"></i></span>
+                                <div>
+                                    <p>Nuevo acceso</p>
+                                    <h3>Crear operador</h3>
+                                </div>
+                            </div>
+
+                            <form class="operator-form" method="post" action="/dashboard/operators">
+                                <label>
+                                    Nombre completo
+                                    <input type="text" name="fullName" placeholder="Nombre y apellidos" minlength="3" maxlength="120" required>
+                                </label>
+                                <label>
+                                    Usuario
+                                    <input type="text" name="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9._-]{3,30}" title="Solo letras, numeros, punto, guion o guion bajo" required>
+                                </label>
+                                <label>
+                                    Email
+                                    <input type="email" name="email" placeholder="correo@ejemplo.com" required>
+                                </label>
+                                <label>
+                                    DNI
+                                    <input type="text" name="dni" placeholder="00000000A" pattern="[0-9]{8}[A-Za-z]" maxlength="9" title="Introduce un DNI valido, por ejemplo 00000000T" required>
+                                </label>
+                                <label>
+                                    Telefono
+                                    <input type="tel" name="phone" placeholder="+34600000000" pattern="\+?[0-9 ]{9,20}" title="Entre 9 y 20 numeros, con prefijo + opcional" required>
+                                </label>
+                                <label>
+                                    Contraseña
+                                    <span class="profile-password-field">
+                                        <input type="password" name="password" minlength="8" autocomplete="new-password" required>
+                                        <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </span>
+                                </label>
+                                <label>
+                                    Repite la contraseña
+                                    <span class="profile-password-field">
+                                        <input type="password" name="confirmPassword" minlength="8" autocomplete="new-password" required>
+                                        <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </span>
+                                </label>
+                                <button type="submit" class="btn-panel">
+                                    <i class="fas fa-plus"></i>
+                                    Crear operador
+                                </button>
+                            </form>
+                        </section>
+
+                        <section class="operator-list-section">
+                            <div class="profile-section-heading">
+                                <span><i class="fas fa-user-gear"></i></span>
+                                <div>
+                                    <p>Usuarios</p>
+                                    <h3>Operadores registrados</h3>
+                                </div>
+                            </div>
+
+                            <div class="operator-list" th:if="${!#lists.isEmpty(operators)}">
+                                <article class="operator-item" th:each="operator : ${operators}"
+                                         th:classappend="${selectedOperator != null && selectedOperator.id == operator.id} ? ' is-selected' : ''">
+                                    <div class="operator-main">
+                                        <div class="dashboard-avatar"><i class="fas fa-user"></i></div>
+                                        <div>
+                                            <h3 th:text="${operator.fullName ?: operator.username}">Operador</h3>
+                                            <p>
+                                                <span th:text="${operator.username}">usuario</span>
+                                                <span> · </span>
+                                                <strong>Operador</strong>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="operator-actions">
+                                        <a class="btn-panel btn-panel-secondary" th:href="@{/dashboard/operators(operatorId=${operator.id})}">
+                                            <i class="fas fa-eye"></i>
+                                            Ver
+                                        </a>
+                                        <button type="button"
+                                                class="btn-panel btn-panel-danger"
+                                                data-action="open-operator-delete"
+                                                th:data-delete-action="@{/dashboard/operators/{id}/delete(id=${operator.id})}"
+                                                th:data-operator-name="${operator.fullName ?: operator.username}">
+                                            <i class="fas fa-trash"></i>
+                                            Borrar
+                                        </button>
+                                    </div>
+                                </article>
+                            </div>
+
+                            <div class="empty-state compact-empty-state" th:if="${#lists.isEmpty(operators)}">
+                                <i class="fas fa-user-gear"></i>
+                                <h3>No hay operadores registrados</h3>
+                                <p>Crea el primer operador desde el formulario.</p>
+                            </div>
+                        </section>
+                    </div>
+                </article>
+
+                <div class="operator-modal is-open" th:if="${selectedOperator != null}" role="dialog" aria-modal="true" aria-labelledby="operator-detail-title">
+                    <a class="operator-modal-backdrop" href="/dashboard/operators" aria-label="Cerrar detalle"></a>
+                    <article class="operator-modal-dialog">
+                        <div class="panel-header">
+                            <div>
+                                <p>Detalle</p>
+                                <h2 id="operator-detail-title" th:text="${selectedOperator.fullName ?: selectedOperator.username}">Operador</h2>
+                            </div>
+                            <a class="modal-close-button" href="/dashboard/operators" aria-label="Cerrar detalle">
+                                <i class="fas fa-xmark"></i>
+                            </a>
+                        </div>
+
+                        <dl class="role-request-data operator-detail-data">
+                            <div><dt>Usuario</dt><dd th:text="${selectedOperator.username}">usuario</dd></div>
+                            <div><dt>Email</dt><dd th:text="${selectedOperator.email}">email</dd></div>
+                            <div><dt>DNI</dt><dd th:text="${selectedOperator.dni}">dni</dd></div>
+                            <div><dt>Telefono</dt><dd th:text="${selectedOperator.phone}">telefono</dd></div>
+                            <div><dt>Rol</dt><dd>Operador</dd></div>
+                            <div><dt>Creado</dt><dd th:text="${selectedOperator.createdAt != null ? #dates.format(T(java.util.Date).from(selectedOperator.createdAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
+                            <div><dt>Actualizado</dt><dd th:text="${selectedOperator.updatedAt != null ? #dates.format(T(java.util.Date).from(selectedOperator.updatedAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
+                        </dl>
+                    </article>
+                </div>
+
+                <div class="account-request-modal"
+                     id="operator-delete-modal"
+                     th:classappend="${operatorDeleteError} ? ' is-open' : ''"
+                     th:attr="aria-hidden=${operatorDeleteError} ? 'false' : 'true'">
+                    <div class="account-request-backdrop" data-action="close-operator-delete"></div>
+                    <section class="account-request-dialog request-status-dialog" role="dialog" aria-modal="true" aria-labelledby="operator-delete-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Confirmación requerida</p>
+                                <h2 id="operator-delete-title">Eliminar operador</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-operator-delete" aria-label="Cerrar borrado">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <form class="operator-request-form" id="operator-delete-form" method="post" th:action="${operatorDeleteAction}">
+                            <p class="reject-modal-target"
+                               id="operator-delete-target"
+                               th:text="${operatorDeleteName != null ? 'Vas a eliminar a ' + operatorDeleteName + '.' : 'Operador seleccionado'}">Operador seleccionado</p>
+                            <p class="account-request-feedback is-error" th:if="${operatorDeleteError}" th:text="${operatorDeleteError}"></p>
+                            <label>
+                                Contraseña del administrador
+                                <span class="profile-password-field">
+                                    <input type="password" name="adminPassword" autocomplete="current-password" required>
+                                    <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </span>
+                            </label>
+                            <div class="modal-actions">
+                                <button type="button" class="btn-panel btn-panel-secondary" data-action="close-operator-delete">Cancelar</button>
+                                <button type="submit" class="btn-panel btn-panel-danger">
+                                    <i class="fas fa-trash"></i>
+                                    Eliminar
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            </section>
+    </th:block>
+</body>
+</html>

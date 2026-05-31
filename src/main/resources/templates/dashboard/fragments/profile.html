@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <th:block th:fragment="profile">
+            <section id="profile" class="dashboard-content-grid" th:if="${activeSection == 'profile'}">
+                <article class="dashboard-card panel-card profile-card">
+                    <div class="panel-header">
+                        <div>
+                            <p>Datos personales</p>
+                            <h2>Mi perfil</h2>
+                        </div>
+                        <button type="submit" form="profile-form" class="btn-panel">
+                            <i class="fas fa-floppy-disk"></i>
+                            Guardar
+                        </button>
+                    </div>
+
+                    <p class="account-request-feedback is-success" th:if="${profileSuccess}" th:text="${profileSuccess}"></p>
+                    <p class="account-request-feedback is-error" th:if="${profileError}" th:text="${profileError}"></p>
+
+                    <form id="profile-form" class="profile-form" method="post" action="/dashboard/profile">
+                        <div class="profile-form-section">
+                            <label>
+                                Nombre completo
+                                <input type="text" name="fullName" th:value="${user.fullName}" placeholder="Tu nombre completo" minlength="3" maxlength="120" required>
+                            </label>
+                            <label>
+                                Usuario
+                                <input type="text" name="username" th:value="${user.username}" minlength="3" maxlength="30" pattern="[A-Za-z0-9._-]{3,30}" title="Solo letras, numeros, punto, guion o guion bajo" required>
+                            </label>
+                            <label>
+                                Email
+                                <input type="email" name="email" th:value="${user.email}" placeholder="correo@ejemplo.com" required>
+                            </label>
+                            <label>
+                                DNI
+                                <input type="text" name="dni" th:value="${user.dni}" placeholder="00000000A" pattern="[0-9]{8}[A-Za-z]" maxlength="9" title="Introduce un DNI valido, por ejemplo 00000000T" required>
+                            </label>
+                            <label>
+                                Telefono
+                                <input type="tel" name="phone" th:value="${user.phone}" placeholder="+34600000000" pattern="\+?[0-9 ]{9,20}" title="Entre 9 y 20 numeros, con prefijo + opcional" required>
+                            </label>
+                            <label>
+                                Rol actual
+                                <input type="text" th:value="${roleLabel}" readonly>
+                            </label>
+                        </div>
+
+                        <div class="profile-password-section">
+                            <div class="profile-section-heading">
+                                <span><i class="fas fa-key"></i></span>
+                                <div>
+                                    <p>Seguridad</p>
+                                    <h3>Cambio de contraseña</h3>
+                                </div>
+                            </div>
+                            <div class="profile-form-section">
+                                <label>
+                                    Contraseña actual
+                                    <span class="profile-password-field">
+                                        <input type="password" name="currentPassword" autocomplete="current-password">
+                                        <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </span>
+                                </label>
+                                <label>
+                                    Nueva contraseña
+                                    <span class="profile-password-field">
+                                        <input type="password" name="newPassword" minlength="8" autocomplete="new-password">
+                                        <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </span>
+                                </label>
+                                <label>
+                                    Repite la nueva contraseña
+                                    <span class="profile-password-field">
+                                        <input type="password" name="confirmPassword" minlength="8" autocomplete="new-password">
+                                        <button type="button" class="password-toggle" data-action="toggle-profile-password" aria-label="Mostrar contraseña" aria-pressed="false">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </article>
+            </section>
+
+            <th:block th:unless="${isAdmin}">
+                <p class="account-request-feedback is-success" th:if="${operatorRequestSuccess}" th:text="${operatorRequestSuccess}"></p>
+                <p class="account-request-feedback is-error" th:if="${operatorRequestError}" th:text="${operatorRequestError}"></p>
+
+                <div class="account-request-modal" id="operator-request-modal" aria-hidden="true">
+                    <div class="account-request-backdrop" data-action="close-operator-request"></div>
+                    <section class="account-request-dialog" role="dialog" aria-modal="true" aria-labelledby="operator-request-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Nueva solicitud</p>
+                                <h2 id="operator-request-title">Solicitar permisos</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-operator-request" aria-label="Cerrar solicitud">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <form class="operator-request-form" method="post" action="/dashboard/role-requests">
+                            <label>
+                                Motivo
+                                <textarea name="reason" rows="5" placeholder="Explica brevemente por que necesitas permisos de administrador"></textarea>
+                            </label>
+                            <div class="modal-actions">
+                                <button type="button" class="btn-panel btn-panel-secondary" data-action="close-operator-request">Cancelar</button>
+                                <button type="submit" class="btn-panel">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Enviar solicitud
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+
+                <div class="account-request-modal" id="operator-status-modal" aria-hidden="true">
+                    <div class="account-request-backdrop" data-action="close-operator-status"></div>
+                    <section class="account-request-dialog" role="dialog" aria-modal="true" aria-labelledby="operator-status-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Seguimiento</p>
+                                <h2 id="operator-status-title">Mis peticiones</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-operator-status" aria-label="Cerrar peticiones">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div class="role-request-list" th:if="${!#lists.isEmpty(userRoleRequests)}">
+                            <article class="role-request-item" th:each="request : ${userRoleRequests}">
+                                <div class="role-request-header">
+                                    <div>
+                                        <p th:text="${(request.currentRole == 'ADMIN' ? 'Administrador' : (request.currentRole == 'GUEST' ? 'Invitado' : 'Operador')) + ' -> ' + (request.requestedRole == 'ADMIN' ? 'Administrador' : (request.requestedRole == 'GUEST' ? 'Invitado' : 'Operador'))}">Operador -> Administrador</p>
+                                        <h3 th:text="${request.status == 'APPROVED'} ? 'Aprobada' : (${request.status == 'REJECTED'} ? 'Rechazada' : 'Pendiente')">Pendiente</h3>
+                                    </div>
+                                    <span class="detail-badge"
+                                          th:classappend="${request.status == 'APPROVED'} ? ' is-success' : (${request.status == 'REJECTED'} ? ' is-danger' : ' is-warning')"
+                                          th:text="${request.status == 'APPROVED'} ? 'Aprobada' : (${request.status == 'REJECTED'} ? 'Rechazada' : 'Pendiente')">Pendiente</span>
+                                </div>
+
+                                <dl class="role-request-data operator-request-data">
+                                    <div><dt>Creada</dt><dd th:text="${request.createdAt != null ? #dates.format(T(java.util.Date).from(request.createdAt), 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">fecha</dd></div>
+                                    <div><dt>Revisada</dt><dd th:text="${request.reviewedAt != null ? #dates.format(T(java.util.Date).from(request.reviewedAt), 'dd/MM/yyyy HH:mm') : 'Pendiente'}">pendiente</dd></div>
+                                </dl>
+
+                            <div class="role-request-reason">
+                                <strong>Motivo</strong>
+                                <p th:text="${#strings.isEmpty(request.reason)} ? 'Sin motivo indicado.' : ${request.reason}">Motivo</p>
+                            </div>
+
+                            <div class="role-request-reason is-rejection" th:if="${request.status == 'REJECTED'}">
+                                <strong>Justificación del rechazo</strong>
+                                <p th:text="${#strings.isEmpty(request.rejectionReason)} ? 'Sin justificación registrada.' : ${request.rejectionReason}">Justificacion</p>
+                            </div>
+                        </article>
+                    </div>
+
+                        <div class="empty-state compact-empty-state" th:if="${#lists.isEmpty(userRoleRequests)}">
+                            <i class="fas fa-list-check"></i>
+                            <h3>No has enviado solicitudes</h3>
+                            <p>Cuando envies una solicitud, podras consultar su estado aqui.</p>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="account-request-modal" id="operator-pending-modal" aria-hidden="true">
+                    <div class="account-request-backdrop" data-action="close-operator-pending"></div>
+                    <section class="account-request-dialog request-status-dialog pending-request-dialog" role="dialog" aria-modal="true" aria-labelledby="operator-pending-title">
+                        <div class="panel-header">
+                            <div>
+                                <p>Solicitud en revisión</p>
+                                <h2 id="operator-pending-title">Ya tienes una petición pendiente</h2>
+                            </div>
+                            <button type="button" class="modal-close-button" data-action="close-operator-pending" aria-label="Cerrar aviso">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div class="pending-request-body">
+                            <span class="pending-request-icon"><i class="fas fa-clock"></i></span>
+                            <div>
+                                <h3>Hay una petición en curso</h3>
+                                <p>Espera a que un administrador revise tu solicitud antes de enviar otra.</p>
+                            </div>
+                        </div>
+
+                        <div class="modal-actions pending-request-actions">
+                            <button type="button" class="btn-panel btn-panel-secondary" data-action="close-operator-pending">Cerrar</button>
+                            <button type="button" class="btn-panel" data-action="switch-pending-to-status">
+                                <i class="fas fa-list-check"></i>
+                                Ver peticiones
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            </th:block>
+    </th:block>
+</body>
+</html>
