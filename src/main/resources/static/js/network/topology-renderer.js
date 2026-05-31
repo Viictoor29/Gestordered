@@ -124,7 +124,7 @@ export function renderEdge(edge, positions, index) {
     `;
 }
 
-function getEdgeLabelPosition(source, target, type, label = '', edge = null) {
+export function getEdgeLabelPosition(source, target, type, label = '', edge = null) {
     const midX = (source.x + target.x) / 2;
     const midY = (source.y + target.y) / 2;
     const dx = target.x - source.x;
@@ -159,7 +159,7 @@ function getEdgeLabelPosition(source, target, type, label = '', edge = null) {
     };
 }
 
-function getSwitchEdgeEndpointLabelPosition(source, target, endpoint) {
+export function getSwitchEdgeEndpointLabelPosition(source, target, endpoint) {
     const from = endpoint === 'source' ? source : target;
     const to = endpoint === 'source' ? target : source;
     const dx = to.x - from.x;
@@ -232,4 +232,3 @@ function renderHostIcon() {
         </g>
     `;
 }
-

@@ -15,7 +15,15 @@ import {
 import { renderEmptyDetail, detailRow, detailSection, renderExtraSection, getSwitchPorts, renderSwitchPortsSection, statusBadge, formatList, formatBoolean, formatValue, formatType, formatState, formatTrafficState, formatForwarding, formatHealth, formatDegradation, formatStpState, formatTime, formatTcValue, formatLossValue, isNodeBlocked, isEdgeUp, isEdgeDown, isEdgeBlocked, normalizeStateValue, getEdgeDegradation, isEdgeDegraded, formatEdgeState, getEdgeStateBadgeClass, renderEdgeTrafficBadge, formatAdminState, formatStp, formatTc, parseResponseJson, compactObject, normalizeNodeName, numberOrUndefined, escapeHtml } from './network/dashboard-formatters.js';
 import { renderPendingMininetDiscovery } from './network/mininet-discovery.js';
 import { bindRoleRequestForms } from './network/role-request-forms.js';
-import { buildLayout, clamp, findHostLink, renderEdge, renderNode } from './network/topology-renderer.js';
+import {
+    buildLayout,
+    clamp,
+    findHostLink,
+    getEdgeLabelPosition,
+    getSwitchEdgeEndpointLabelPosition,
+    renderEdge,
+    renderNode
+} from './network/topology-renderer.js';
 
 
 (() => {

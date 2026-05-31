@@ -7,6 +7,7 @@
     const MAX_HOST_NUMBER = 255;
     const FALLBACK_IPV4_PREFIX = 24;
     const MAX_SWITCH_PORT = 4096;
+    const INVENTORY_READ_RETRY_DELAY_MS = 350;
     let pendingConfirmation = null;
 
     if (!root || !serverInput) {
@@ -291,12 +292,26 @@
     }
 
     async function loadMininetInventory(serverUrl) {
-        try {
-            const payload = await fetchJson(proxyUrl('/api/admin/mininet/topology/export', serverUrl));
-            return normalizeInventory(payload);
-        } catch (error) {
-            throw new Error('No se pudo leer la topologia activa de Mininet para validar nombres, IPs y puertos.');
+        let lastError;
+
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+            try {
+                const payload = await fetchJson(proxyUrl('/api/admin/mininet/topology/export', serverUrl));
+                return normalizeInventory(payload);
+            } catch (error) {
+                lastError = error;
+                if (attempt === 0) {
+                    await delay(INVENTORY_READ_RETRY_DELAY_MS);
+                }
+            }
         }
+
+        const reason = lastError?.message ? ` Motivo: ${lastError.message}` : '';
+        throw new Error(`No se pudo leer la topologia activa de Mininet para validar nombres, IPs y puertos.${reason}`);
+    }
+
+    function delay(milliseconds) {
+        return new Promise(resolve => window.setTimeout(resolve, milliseconds));
     }
 
     async function fetchJson(url) {
