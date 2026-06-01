@@ -19,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Controller
 public class NetworkApiController {
 
+    // The frontend consumes several evolving network payloads, so this proxy deliberately preserves raw JSON responses.
     private static final Set<String> ADMIN_ROLES = Set.of("ADMIN");
     private static final Set<String> OPERATOR_ROLES = Set.of("ADMIN", "OPERATOR");
 

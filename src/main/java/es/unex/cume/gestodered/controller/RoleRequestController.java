@@ -2,7 +2,7 @@ package es.unex.cume.gestodered.controller;
 
 import es.unex.cume.gestodered.data.model.RoleRequest;
 import es.unex.cume.gestodered.data.model.User;
-import es.unex.cume.gestodered.data.repository.UserRepository;
+import es.unex.cume.gestodered.service.OperatorService;
 import es.unex.cume.gestodered.service.RoleRequestService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
@@ -19,11 +19,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class RoleRequestController {
 
     private final RoleRequestService roleRequestService;
-    private final UserRepository userRepository;
+    private final OperatorService operatorService;
 
-    public RoleRequestController(RoleRequestService roleRequestService, UserRepository userRepository) {
+    public RoleRequestController(RoleRequestService roleRequestService, OperatorService operatorService) {
         this.roleRequestService = roleRequestService;
-        this.userRepository = userRepository;
+        this.operatorService = operatorService;
     }
 
     @PostMapping("/guest/role-requests")
@@ -219,28 +219,10 @@ public class RoleRequestController {
     }
 
     private User requireAdmin(Authentication authentication) {
-        String username = authentication == null ? "" : authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new SecurityException("Usuario no encontrado"));
-        String role = user.getRole() == null ? "" : user.getRole().replace("ROLE_", "").toUpperCase();
-
-        if (!"ADMIN".equals(role)) {
-            throw new SecurityException("Permisos insuficientes");
-        }
-
-        return user;
+        return operatorService.requireRole(authentication, "ADMIN");
     }
 
     private User requireOperator(Authentication authentication) {
-        String username = authentication == null ? "" : authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new SecurityException("Usuario no encontrado"));
-        String role = user.getRole() == null ? "" : user.getRole().replace("ROLE_", "").toUpperCase();
-
-        if (!"OPERATOR".equals(role)) {
-            throw new SecurityException("Permisos insuficientes");
-        }
-
-        return user;
+        return operatorService.requireExplicitRole(authentication, "OPERATOR");
     }
 }
