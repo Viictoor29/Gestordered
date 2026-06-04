@@ -386,3 +386,106 @@ button {
     font-weight: 900;
 }
 
+.collapsible-panel > .panel-header,
+.collapsible-panel > .network-status-heading,
+.collapsible-panel > .topology-live-inventory-header,
+.collapsible-panel > .profile-section-heading {
+    margin-bottom: 14px;
+}
+
+.collapsible-panel.is-collapsed > .panel-header,
+.collapsible-panel.is-collapsed > .network-status-heading,
+.collapsible-panel.is-collapsed > .topology-live-inventory-header,
+.collapsible-panel.is-collapsed > .profile-section-heading {
+    margin-bottom: 0;
+}
+
+.collapsible-panel-body {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+}
+
+.collapsible-panel-body[hidden] {
+    display: none;
+}
+
+.collapsible-header-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.collapsible-header-actions .role-badge {
+    min-height: 38px;
+    padding: 8px 12px;
+}
+
+.collapsible-header-actions .topology-live-inventory-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.collapsible-header-actions .btn-panel,
+.collapsible-header-actions .topology-refresh-button,
+.collapsible-toggle {
+    border: 1px solid #dbe3ef;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #172554;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 8px 12px;
+    font-size: 0.84rem;
+    font-weight: 900;
+    line-height: 1;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+    white-space: nowrap;
+}
+
+.collapsible-header-actions .btn-panel:hover,
+.collapsible-header-actions .topology-refresh-button:hover,
+.collapsible-toggle:hover,
+.collapsible-toggle:focus-visible {
+    border-color: rgba(212, 175, 55, 0.62);
+    background: #fffbeb;
+    color: #172554;
+    outline: none;
+    box-shadow: 0 10px 22px rgba(212, 175, 55, 0.18);
+}
+
+.collapsible-header-actions .btn-panel i,
+.collapsible-header-actions .topology-refresh-button i,
+.collapsible-toggle i {
+    color: #D4AF37;
+    font-size: 0.78rem;
+}
+
+.collapsible-header-actions .btn-panel-danger {
+    border-color: rgba(180, 35, 24, 0.22);
+    background: #fff7f7;
+    color: #b42318;
+    box-shadow: 0 8px 18px rgba(180, 35, 24, 0.08);
+}
+
+.collapsible-header-actions .btn-panel-danger:hover,
+.collapsible-header-actions .btn-panel-danger:focus-visible {
+    border-color: rgba(180, 35, 24, 0.34);
+    background: #fff1f3;
+    color: #912018;
+    box-shadow: 0 10px 22px rgba(180, 35, 24, 0.14);
+}
+
+.collapsible-header-actions .btn-panel-danger i {
+    color: #b42318;
+}
+

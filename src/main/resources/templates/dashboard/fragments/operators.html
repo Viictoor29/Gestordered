@@ -16,7 +16,7 @@
                     <p class="account-request-feedback is-error" th:if="${operatorError}" th:text="${operatorError}"></p>
 
                     <div class="operators-layout">
-                        <section class="operator-create-section">
+                        <section class="operator-create-section" data-collapsible data-collapsed="true">
                             <div class="profile-section-heading">
                                 <span><i class="fas fa-user-plus"></i></span>
                                 <div>
@@ -71,7 +71,7 @@
                             </form>
                         </section>
 
-                        <section class="operator-list-section">
+                        <section class="operator-list-section" data-collapsible>
                             <div class="profile-section-heading">
                                 <span><i class="fas fa-user-gear"></i></span>
                                 <div>

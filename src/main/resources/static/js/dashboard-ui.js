@@ -23,6 +23,75 @@ const bindModal = (openAction, closeAction, modalId) => {
     });
 };
 
+document.querySelectorAll('[data-collapsible]').forEach((panel, index) => {
+    const header = panel.querySelector(':scope > .network-status-heading, :scope > .topology-live-inventory-header, :scope > .profile-section-heading, :scope > .panel-header');
+    if (!header) {
+        return;
+    }
+
+    const panelId = panel.id || panel.dataset.collapsibleId || `dashboard-collapsible-${index}`;
+    const storageKey = `gestodered:${window.location.pathname}:${panelId}`;
+    const getStoredState = () => {
+        try {
+            return sessionStorage.getItem(storageKey);
+        } catch (error) {
+            return null;
+        }
+    };
+    const setStoredState = state => {
+        try {
+            sessionStorage.setItem(storageKey, state);
+        } catch (error) {
+            // Keeping the accordion usable matters more than persisting the state.
+        }
+    };
+    const body = document.createElement('div');
+    body.className = 'collapsible-panel-body';
+    body.id = `${panelId}-body`;
+
+    while (header.nextSibling) {
+        body.appendChild(header.nextSibling);
+    }
+
+    panel.appendChild(body);
+    panel.classList.add('collapsible-panel');
+
+    const headerChildren = Array.from(header.children);
+    const titleEndIndex = header.classList.contains('profile-section-heading') ? 2 : 1;
+    const actionGroup = document.createElement('div');
+    actionGroup.className = 'collapsible-header-actions';
+
+    headerChildren.slice(titleEndIndex).forEach(child => {
+        actionGroup.appendChild(child);
+    });
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'collapsible-toggle';
+    toggle.setAttribute('aria-controls', body.id);
+    toggle.innerHTML = '<span>Ocultar</span><i class="fas fa-chevron-up" aria-hidden="true"></i>';
+    actionGroup.appendChild(toggle);
+    header.appendChild(actionGroup);
+
+    const storedState = getStoredState();
+    const startsCollapsed = storedState ? storedState === 'collapsed' : panel.dataset.collapsed === 'true';
+
+    const setCollapsed = collapsed => {
+        body.hidden = collapsed;
+        panel.classList.toggle('is-collapsed', collapsed);
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+        toggle.querySelector('span').textContent = collapsed ? 'Mostrar' : 'Ocultar';
+        toggle.querySelector('i').className = collapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+        setStoredState(collapsed ? 'collapsed' : 'expanded');
+    };
+
+    toggle.addEventListener('click', () => {
+        setCollapsed(!body.hidden);
+    });
+
+    setCollapsed(startsCollapsed);
+});
+
 bindModal('open-operator-request', 'close-operator-request', 'operator-request-modal');
 bindModal('open-operator-status', 'close-operator-status', 'operator-status-modal');
 bindModal('open-operator-pending', 'close-operator-pending', 'operator-pending-modal');
