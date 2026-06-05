@@ -550,18 +550,33 @@ a {
     color: #f8fafc;
     margin-top: 32px;
     font-size: 0.95rem;
-    font-weight: 600;
+    font-weight: 500;
     display: flex;
+    flex-direction: column;
     justify-content: center;
-    gap: 14px;
-    flex-wrap: wrap;
+    gap: 6px;
     text-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
 }
 
-.site-footer span + span::before {
-    content: "|";
-    margin-right: 14px;
+.site-footer p {
+    margin: 0;
+}
+
+.site-footer strong {
     color: #D4AF37;
+    font-weight: 700;
+}
+
+.site-footer a {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.site-footer a:hover,
+.site-footer a:focus {
+    color: #D4AF37;
+    text-decoration: underline;
 }
 
 @keyframes fadeInDown {
@@ -649,11 +664,7 @@ a {
     }
 
     .site-footer {
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .site-footer span + span::before {
-        content: none;
+        font-size: 0.85rem;
+        line-height: 1.45;
     }
 }
