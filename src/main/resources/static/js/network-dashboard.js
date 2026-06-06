@@ -1,9 +1,9 @@
-import { initNetworkStatusPanels } from './network/status-panels.js?v=20260531-topology-editor';
-import { initBlockedIpsPanel } from './network/blocked-ips-panel.js';
-import { initHealthPanel } from './network/health-panel.js';
-import { initStpPanel } from './network/stp-panel.js';
-import { initTopologyExportActions } from './network/topology-export.js';
-import { initTrafficPanel } from './network/traffic-panel.js';
+import { initNetworkStatusPanels } from './network/status-panels.js?v=20260606-api-key-proxy';
+import { initBlockedIpsPanel } from './network/blocked-ips-panel.js?v=20260606-api-key-proxy';
+import { initHealthPanel } from './network/health-panel.js?v=20260606-api-key-proxy';
+import { initStpPanel } from './network/stp-panel.js?v=20260606-api-key-proxy';
+import { initTopologyExportActions } from './network/topology-export.js?v=20260606-api-key-proxy';
+import { initTrafficPanel } from './network/traffic-panel.js?v=20260606-api-key-proxy';
 import {
     bindEdgeDegradationForm,
     bindEdgeStateActions,
@@ -11,7 +11,7 @@ import {
     renderEdgeDegradationControl,
     renderEdgeStateControl,
     renderNodeIpTrafficControl
-} from './network/contextual-actions.js';
+} from './network/contextual-actions.js?v=20260606-api-key-proxy';
 import { renderEmptyDetail, detailRow, detailSection, renderExtraSection, getSwitchPorts, renderSwitchPortsSection, statusBadge, formatList, formatBoolean, formatValue, formatType, formatState, formatTrafficState, formatForwarding, formatHealth, formatDegradation, formatStpState, formatTime, formatTcValue, formatLossValue, isNodeBlocked, isEdgeUp, isEdgeDown, isEdgeBlocked, normalizeStateValue, getEdgeDegradation, isEdgeDegraded, formatEdgeState, getEdgeStateBadgeClass, renderEdgeTrafficBadge, formatAdminState, formatStp, formatTc, parseResponseJson, compactObject, normalizeNodeName, numberOrUndefined, escapeHtml } from './network/dashboard-formatters.js';
 import { renderPendingMininetDiscovery } from './network/mininet-discovery.js';
 import { bindRoleRequestForms } from './network/role-request-forms.js';
@@ -65,31 +65,39 @@ import {
     const networkStatusPanels = initNetworkStatusPanels({
         serverInput: input,
         refreshIntervalMs,
-        getServerUrl: () => currentServer
+        getServerUrl: () => currentServer,
+        buildApiUrl,
+        buildMininetApiUrl
     });
     const healthPanel = initHealthPanel({
         serverInput: input,
         refreshIntervalMs,
-        getServerUrl: () => currentServer
+        getServerUrl: () => currentServer,
+        buildApiUrl
     });
     const stpPanel = initStpPanel({
         serverInput: input,
         refreshIntervalMs,
-        getServerUrl: () => currentServer
+        getServerUrl: () => currentServer,
+        buildApiUrl
     });
     const trafficPanel = initTrafficPanel({
         serverInput: input,
         getServerUrl: () => currentServer,
+        buildApiUrl,
         onTrafficComplete: () => healthPanel.refresh()
     });
     const blockedIpsPanel = initBlockedIpsPanel({
-        getServerUrl: () => currentServer
+        getServerUrl: () => currentServer,
+        buildApiUrl
     });
     const topologyExportActions = initTopologyExportActions({
-        getServerUrl: () => currentServer
+        getServerUrl: () => currentServer,
+        buildApiUrl
     });
     const contextualActionContext = {
         getServerUrl: () => currentServer,
+        buildApiUrl,
         refreshTopology: () => loadTopology(),
         refreshHealth: () => healthPanel.refresh(),
         refreshStp: () => stpPanel.refresh(),
@@ -144,12 +152,12 @@ import {
         try {
             const topologyUrl = usesGuestProxy
                 ? buildGuestProxyUrl('/guest/api/topology', baseUrl)
-                : `${baseUrl}/api/topology`;
+                : buildBackendProxyUrl('/api/topology', baseUrl);
             const checks = [fetchRequiredJson(topologyUrl, 'Ryu')];
             if (requiresMininetConnection) {
                 const mininetUrl = usesGuestProxy
                     ? buildGuestProxyUrl('/guest/api/mininet/status', toMininetUrl(baseUrl))
-                    : `${toMininetUrl(baseUrl)}/api/mininet/status`;
+                    : buildBackendProxyUrl('/api/mininet/status', toMininetUrl(baseUrl));
                 checks.push(fetchRequiredJson(mininetUrl, 'Mininet'));
             }
 
@@ -212,6 +220,18 @@ import {
 
     function buildGuestProxyUrl(path, serverUrl) {
         return `${path}?serverUrl=${encodeURIComponent(serverUrl)}`;
+    }
+
+    function buildBackendProxyUrl(path, serverUrl) {
+        return `${path}?serverUrl=${encodeURIComponent(serverUrl)}`;
+    }
+
+    function buildApiUrl(path) {
+        return buildBackendProxyUrl(path, currentServer);
+    }
+
+    function buildMininetApiUrl(path) {
+        return buildBackendProxyUrl(path, toMininetUrl(currentServer));
     }
 
     function refreshLivePanels() {

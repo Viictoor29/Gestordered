@@ -1,4 +1,4 @@
-export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }) {
+export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl, buildApiUrl }) {
     const refreshButton = document.querySelector('[data-health-refresh]');
     const body = document.querySelector('[data-health-body]');
     const flowModal = createFlowModal();
@@ -59,8 +59,8 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
 
         try {
             const [summaryPayload, healthPayload] = await Promise.all([
-                fetchJson(buildApiUrl('/api/health/summary')),
-                fetchJson(buildApiUrl('/api/health'))
+                fetchJson(buildRyuUrl('/api/health/summary')),
+                fetchJson(buildRyuUrl('/api/health'))
             ]);
             renderHealth(summaryPayload.data || summaryPayload, healthPayload.data || healthPayload);
             start();
@@ -243,7 +243,7 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
         showFlowModal(dpid, expectedCount);
 
         try {
-            const payload = await fetchJson(buildApiUrl(`/api/switch/${encodeURIComponent(dpid)}/flows`));
+            const payload = await fetchJson(buildRyuUrl(`/api/switch/${encodeURIComponent(dpid)}/flows`));
             renderFlowModalContent(payload.data || payload);
         } catch (error) {
             setFlowModalMessage(error.message || 'No se pudieron cargar los flujos.', 'error');
@@ -291,7 +291,11 @@ export function initHealthPanel({ serverInput, refreshIntervalMs, getServerUrl }
         return payload;
     }
 
-    function buildApiUrl(path) {
+    function buildRyuUrl(path) {
+        if (typeof buildApiUrl === 'function') {
+            return buildApiUrl(path);
+        }
+
         return `${getActiveServerUrl()}${path}`;
     }
 

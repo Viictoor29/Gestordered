@@ -1,4 +1,4 @@
-export function initStpPanel({ serverInput, refreshIntervalMs, getServerUrl }) {
+export function initStpPanel({ serverInput, refreshIntervalMs, getServerUrl, buildApiUrl }) {
     const refreshButton = document.querySelector('[data-stp-refresh]');
     const body = document.querySelector('[data-stp-body]');
 
@@ -45,7 +45,7 @@ export function initStpPanel({ serverInput, refreshIntervalMs, getServerUrl }) {
         body.innerHTML = renderPlaceholder('loading', 'Consultando estado STP...');
 
         try {
-            const payload = await fetchJson(buildApiUrl('/api/stp/status'));
+            const payload = await fetchJson(buildRyuUrl('/api/stp/status'));
             renderStpStatus(payload.data || payload);
             start();
         } catch (error) {
@@ -74,7 +74,11 @@ export function initStpPanel({ serverInput, refreshIntervalMs, getServerUrl }) {
         return payload;
     }
 
-    function buildApiUrl(path) {
+    function buildRyuUrl(path) {
+        if (typeof buildApiUrl === 'function') {
+            return buildApiUrl(path);
+        }
+
         return `${getActiveServerUrl()}${path}`;
     }
 

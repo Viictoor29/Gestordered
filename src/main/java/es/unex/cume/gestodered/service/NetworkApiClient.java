@@ -18,16 +18,21 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Service
 public class NetworkApiClient {
 
+    private static final String API_KEY_HEADER = "X-API-Key";
+
     private final RestClient restClient;
     private final String ryuApiUrl;
     private final String mininetApiUrl;
+    private final String networkApiKey;
 
     public NetworkApiClient(
             @Value("${gestordered.ryu-api-url:http://127.0.0.1:8080}") String ryuApiUrl,
-            @Value("${gestordered.mininet-api-url:http://127.0.0.1:8081}") String mininetApiUrl) {
+            @Value("${gestordered.mininet-api-url:http://127.0.0.1:8081}") String mininetApiUrl,
+            @Value("${gestordered.network-api-key:gestordered-tfg-network-api-key-2026}") String networkApiKey) {
         this.restClient = RestClient.builder().build();
         this.ryuApiUrl = trimTrailingSlash(ryuApiUrl);
         this.mininetApiUrl = trimTrailingSlash(mininetApiUrl);
+        this.networkApiKey = networkApiKey;
     }
 
     public ResponseEntity<String> ryu(HttpMethod method, String path, String body, HttpServletRequest request) {
@@ -53,6 +58,7 @@ public class NetworkApiClient {
         try {
             return restClient.method(method)
                     .uri(uri)
+                    .header(API_KEY_HEADER, networkApiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
                     .body(body == null || body.isBlank() ? "{}" : body)

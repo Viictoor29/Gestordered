@@ -1,4 +1,4 @@
-export function initTrafficPanel({ serverInput, getServerUrl, onTrafficComplete }) {
+export function initTrafficPanel({ serverInput, getServerUrl, buildApiUrl, onTrafficComplete }) {
     const root = document.querySelector('[data-traffic-panel]');
     const result = document.querySelector('[data-traffic-result]');
 
@@ -60,7 +60,8 @@ export function initTrafficPanel({ serverInput, getServerUrl, onTrafficComplete 
     }
 
     async function postJson(path, payload) {
-        const response = await fetch(`${getActiveServerUrl()}${path}`, {
+        const url = typeof buildApiUrl === 'function' ? buildApiUrl(path) : `${getActiveServerUrl()}${path}`;
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 Accept: 'application/json',

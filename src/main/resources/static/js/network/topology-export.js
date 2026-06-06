@@ -1,4 +1,4 @@
-export function initTopologyExportActions({ getServerUrl }) {
+export function initTopologyExportActions({ getServerUrl, buildApiUrl }) {
     const modal = createExportModal();
     let currentButton = null;
     let currentStatus = null;
@@ -29,7 +29,7 @@ export function initTopologyExportActions({ getServerUrl }) {
         if (!formBound) {
             modal.form.addEventListener('submit', event => {
                 event.preventDefault();
-                exportTopology(currentButton, currentStatus, modal, getServerUrl);
+                exportTopology(currentButton, currentStatus, modal, getServerUrl, buildApiUrl);
             });
             formBound = true;
         }
@@ -38,7 +38,7 @@ export function initTopologyExportActions({ getServerUrl }) {
     return { bind };
 }
 
-async function exportTopology(button, status, modal, getServerUrl) {
+async function exportTopology(button, status, modal, getServerUrl, buildApiUrl) {
     const serverUrl = getServerUrl();
     const endpoint = button?.dataset.topologyExport || '/api/topology/export';
     const originalHtml = button?.innerHTML || '';
@@ -57,7 +57,8 @@ async function exportTopology(button, status, modal, getServerUrl) {
     setModalFeedback(modal, 'Preparando descarga...', 'loading');
 
     try {
-        const response = await fetch(`${serverUrl}${endpoint}`, {
+        const url = typeof buildApiUrl === 'function' ? buildApiUrl(endpoint) : `${serverUrl}${endpoint}`;
+        const response = await fetch(url, {
             headers: { Accept: 'application/json' },
             credentials: 'same-origin'
         });

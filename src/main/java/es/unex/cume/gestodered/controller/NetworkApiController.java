@@ -30,8 +30,10 @@ public class NetworkApiController {
     }
 
     @GetMapping("/api/topology")
-    public ResponseEntity<String> getTopology(HttpServletRequest request) {
-        return networkApiClient.ryu(HttpMethod.GET, "/api/topology", null, request);
+    public ResponseEntity<String> getTopology(
+            @RequestParam(required = false) String serverUrl,
+            HttpServletRequest request) {
+        return ryu(serverUrl, HttpMethod.GET, "/api/topology", null, request);
     }
 
     @GetMapping("/guest/api/topology")
@@ -47,7 +49,7 @@ public class NetworkApiController {
     @GetMapping("/api/topology/export")
     public ResponseEntity<String> exportTopology(Authentication authentication, HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
-        return networkApiClient.ryu(HttpMethod.GET, "/api/topology/export", null, request);
+        return ryu(request.getParameter("serverUrl"), HttpMethod.GET, "/api/topology/export", null, request);
     }
 
     @PostMapping("/api/topology/validate")
@@ -56,7 +58,7 @@ public class NetworkApiController {
             Authentication authentication,
             HttpServletRequest request) {
         requireRole(authentication, ADMIN_ROLES);
-        return networkApiClient.ryu(HttpMethod.POST, "/api/topology/validate", body, request);
+        return ryu(request.getParameter("serverUrl"), HttpMethod.POST, "/api/topology/validate", body, request);
     }
 
     @PostMapping("/api/topology/import")
@@ -65,7 +67,7 @@ public class NetworkApiController {
             Authentication authentication,
             HttpServletRequest request) {
         requireRole(authentication, ADMIN_ROLES);
-        return networkApiClient.ryu(HttpMethod.POST, "/api/topology/import", body, request);
+        return ryu(request.getParameter("serverUrl"), HttpMethod.POST, "/api/topology/import", body, request);
     }
 
     @PostMapping("/api/controller/runtime/reset")
@@ -74,25 +76,25 @@ public class NetworkApiController {
             Authentication authentication,
             HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
-        return networkApiClient.ryu(HttpMethod.POST, "/api/controller/runtime/reset", body, request);
+        return ryu(request.getParameter("serverUrl"), HttpMethod.POST, "/api/controller/runtime/reset", body, request);
     }
 
     @GetMapping("/api/controller/status")
     public ResponseEntity<String> getControllerStatus(Authentication authentication, HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
-        return networkApiClient.ryu(HttpMethod.GET, "/api/controller/status", null, request);
+        return ryu(request.getParameter("serverUrl"), HttpMethod.GET, "/api/controller/status", null, request);
     }
 
     @GetMapping("/api/health")
     public ResponseEntity<String> getHealth(Authentication authentication, HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
-        return networkApiClient.ryu(HttpMethod.GET, "/api/health", null, request);
+        return ryu(request.getParameter("serverUrl"), HttpMethod.GET, "/api/health", null, request);
     }
 
     @GetMapping("/api/health/summary")
     public ResponseEntity<String> getHealthSummary(Authentication authentication, HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
-        return networkApiClient.ryu(HttpMethod.GET, "/api/health/summary", null, request);
+        return ryu(request.getParameter("serverUrl"), HttpMethod.GET, "/api/health/summary", null, request);
     }
 
     @GetMapping("/api/switch/{dpid}/ports")
@@ -101,7 +103,7 @@ public class NetworkApiController {
             Authentication authentication,
             HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
-        return networkApiClient.ryu(HttpMethod.GET, "/api/switch/" + dpid + "/ports", null, request);
+        return ryu(request.getParameter("serverUrl"), HttpMethod.GET, "/api/switch/" + dpid + "/ports", null, request);
     }
 
     @GetMapping("/api/switch/{dpid}/flows")
@@ -110,13 +112,13 @@ public class NetworkApiController {
             Authentication authentication,
             HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
-        return networkApiClient.ryu(HttpMethod.GET, "/api/switch/" + dpid + "/flows", null, request);
+        return ryu(request.getParameter("serverUrl"), HttpMethod.GET, "/api/switch/" + dpid + "/flows", null, request);
     }
 
     @GetMapping("/api/stp/status")
     public ResponseEntity<String> getStpStatus(Authentication authentication, HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
-        return networkApiClient.ryu(HttpMethod.GET, "/api/stp/status", null, request);
+        return ryu(request.getParameter("serverUrl"), HttpMethod.GET, "/api/stp/status", null, request);
     }
 
     @PostMapping({
@@ -147,13 +149,13 @@ public class NetworkApiController {
             Authentication authentication,
             HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
-        return networkApiClient.ryu(HttpMethod.POST, request.getRequestURI(), body, request);
+        return ryu(request.getParameter("serverUrl"), HttpMethod.POST, request.getRequestURI(), body, request);
     }
 
     @GetMapping("/api/traffic/blocked-ips")
     public ResponseEntity<String> getBlockedIps(Authentication authentication, HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
-        return networkApiClient.ryu(HttpMethod.GET, "/api/traffic/blocked-ips", null, request);
+        return ryu(request.getParameter("serverUrl"), HttpMethod.GET, "/api/traffic/blocked-ips", null, request);
     }
 
     @DeleteMapping("/api/hosts/forget/{mac}")
@@ -162,19 +164,19 @@ public class NetworkApiController {
             Authentication authentication,
             HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
-        return networkApiClient.ryu(HttpMethod.DELETE, "/api/hosts/forget/" + mac, null, request);
+        return ryu(request.getParameter("serverUrl"), HttpMethod.DELETE, "/api/hosts/forget/" + mac, null, request);
     }
 
     @GetMapping("/api/mininet/status")
     public ResponseEntity<String> getMininetStatus(Authentication authentication, HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
-        return networkApiClient.mininet(HttpMethod.GET, "/api/mininet/status", null, request);
+        return mininet(request.getParameter("serverUrl"), HttpMethod.GET, "/api/mininet/status", null, request);
     }
 
     @GetMapping("/api/mininet/topology/export")
     public ResponseEntity<String> exportMininetTopology(Authentication authentication, HttpServletRequest request) {
         requireRole(authentication, OPERATOR_ROLES);
-        return networkApiClient.mininet(HttpMethod.GET, "/api/mininet/topology/export", null, request);
+        return mininet(request.getParameter("serverUrl"), HttpMethod.GET, "/api/mininet/topology/export", null, request);
     }
 
     @GetMapping("/api/admin/mininet/topology/export")
@@ -274,7 +276,7 @@ public class NetworkApiController {
             Authentication authentication,
             HttpServletRequest request) {
         requireRole(authentication, ADMIN_ROLES);
-        return networkApiClient.mininet(HttpMethod.POST, request.getRequestURI(), body, request);
+        return mininet(request.getParameter("serverUrl"), HttpMethod.POST, request.getRequestURI(), body, request);
     }
 
     @DeleteMapping({
@@ -287,7 +289,33 @@ public class NetworkApiController {
             Authentication authentication,
             HttpServletRequest request) {
         requireRole(authentication, ADMIN_ROLES);
-        return networkApiClient.mininet(HttpMethod.DELETE, request.getRequestURI(), body, request);
+        return mininet(request.getParameter("serverUrl"), HttpMethod.DELETE, request.getRequestURI(), body, request);
+    }
+
+    private ResponseEntity<String> ryu(
+            String serverUrl,
+            HttpMethod method,
+            String path,
+            String body,
+            HttpServletRequest request) {
+        if (serverUrl != null && !serverUrl.isBlank()) {
+            return networkApiClient.absolute(serverUrl, method, path, body);
+        }
+
+        return networkApiClient.ryu(method, path, body, request);
+    }
+
+    private ResponseEntity<String> mininet(
+            String serverUrl,
+            HttpMethod method,
+            String path,
+            String body,
+            HttpServletRequest request) {
+        if (serverUrl != null && !serverUrl.isBlank()) {
+            return networkApiClient.absolute(serverUrl, method, path, body);
+        }
+
+        return networkApiClient.mininet(method, path, body, request);
     }
 
     private void requireRole(Authentication authentication, Set<String> roles) {

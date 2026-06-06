@@ -1,4 +1,4 @@
-export function initBlockedIpsPanel({ getServerUrl }) {
+export function initBlockedIpsPanel({ getServerUrl, buildApiUrl }) {
     const root = document.querySelector('[data-blocked-ips-panel]');
     const body = document.querySelector('[data-blocked-ips-body]');
     const refreshButton = document.querySelector('[data-blocked-ips-refresh]');
@@ -26,7 +26,10 @@ export function initBlockedIpsPanel({ getServerUrl }) {
         renderPlaceholder('loading', 'Consultando IPs bloqueadas...');
 
         try {
-            const payload = await fetchJson(`${serverUrl}/api/traffic/blocked-ips`);
+            const url = typeof buildApiUrl === 'function'
+                ? buildApiUrl('/api/traffic/blocked-ips')
+                : `${serverUrl}/api/traffic/blocked-ips`;
+            const payload = await fetchJson(url);
             renderBlockedIps(payload.data || payload);
         } catch (error) {
             renderPlaceholder('error', error.message || 'No se pudieron consultar las IPs bloqueadas.');

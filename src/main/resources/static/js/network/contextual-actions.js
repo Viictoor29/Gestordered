@@ -172,7 +172,7 @@ async function submitIpTrafficAction(ip, action, button, result, context) {
     renderContextualMessage(result, 'loading', action === 'unblock' ? 'Desbloqueando IP...' : 'Bloqueando IP...');
 
     try {
-        await postJson(`${serverUrl}${path}`, { ip });
+        await postJson(buildActionUrl(context, path, serverUrl), { ip });
         clearActionMessage(result);
         showTopologyActionModal(action === 'unblock' ? 'IP desbloqueada.' : 'IP bloqueada.', 'success');
         context.refreshTopology();
@@ -203,7 +203,7 @@ async function submitEdgeStateAction(actions, action, button, result, context) {
     renderContextualMessage(result, 'loading', action === 'enable' ? 'Habilitando enlace...' : 'Deshabilitando enlace...');
 
     try {
-        await postJson(`${serverUrl}${operation.path}`, operation.body);
+        await postJson(buildActionUrl(context, operation.path, serverUrl), operation.body);
         clearActionMessage(result);
         showTopologyActionModal(action === 'enable' ? 'Enlace habilitado.' : 'Enlace deshabilitado.', 'success');
         context.refreshTopology();
@@ -238,7 +238,7 @@ async function submitEdgeDegradation(form, result, button, context, forcedMetric
 
     try {
         const operation = buildEdgeDegradationOperation(new FormData(form), forcedMetric);
-        await postJson(`${serverUrl}${operation.path}`, operation.body);
+        await postJson(buildActionUrl(context, operation.path, serverUrl), operation.body);
         clearActionMessage(result);
         showTopologyActionModal(buildEdgeDegradationSuccessMessage(operation), 'success');
         context.refreshTopology();
@@ -410,6 +410,14 @@ async function postJson(url, body) {
     }
 
     return payload;
+}
+
+function buildActionUrl(context, path, serverUrl) {
+    if (typeof context.buildApiUrl === 'function') {
+        return context.buildApiUrl(path);
+    }
+
+    return `${serverUrl}${path}`;
 }
 
 function buildEdgeDegradationSuccessMessage(operation) {

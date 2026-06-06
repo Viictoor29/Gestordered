@@ -1,4 +1,4 @@
-export function initNetworkStatusPanels({ serverInput, refreshIntervalMs, getServerUrl }) {
+export function initNetworkStatusPanels({ serverInput, refreshIntervalMs, getServerUrl, buildApiUrl, buildMininetApiUrl }) {
     const statusTabs = document.querySelectorAll('[data-status-tab]');
     const statusPanels = document.querySelectorAll('[data-status-panel]');
     const controllerStatusButton = document.querySelector('[data-controller-status-refresh]');
@@ -125,7 +125,7 @@ export function initNetworkStatusPanels({ serverInput, refreshIntervalMs, getSer
         controllerStatusBody.innerHTML = renderStatusPlaceholder('loading', 'Consultando el controlador...');
 
         try {
-            const payload = await fetchJson(buildApiUrl('/api/controller/status'));
+            const payload = await fetchJson(buildRyuUrl('/api/controller/status'));
             renderControllerStatus(payload.data || payload);
             startControllerStatusAutoRefresh();
         } catch (error) {
@@ -158,7 +158,7 @@ export function initNetworkStatusPanels({ serverInput, refreshIntervalMs, getSer
         mininetStatusBody.innerHTML = renderStatusPlaceholder('loading', 'Consultando Mininet...');
 
         try {
-            const payload = await fetchJson(buildMininetApiUrl('/api/mininet/status'));
+            const payload = await fetchJson(buildMininetUrl('/api/mininet/status'));
             renderMininetStatus(payload.data || payload);
             startMininetStatusAutoRefresh();
         } catch (error) {
@@ -187,11 +187,19 @@ export function initNetworkStatusPanels({ serverInput, refreshIntervalMs, getSer
         return payload;
     }
 
-    function buildApiUrl(path) {
+    function buildRyuUrl(path) {
+        if (typeof buildApiUrl === 'function') {
+            return buildApiUrl(path);
+        }
+
         return `${getActiveServerUrl()}${path}`;
     }
 
-    function buildMininetApiUrl(path) {
+    function buildMininetUrl(path) {
+        if (typeof buildMininetApiUrl === 'function') {
+            return buildMininetApiUrl(path);
+        }
+
         const url = new URL(getActiveServerUrl());
         if (!url.port || url.port === '8080') {
             url.port = '8081';
