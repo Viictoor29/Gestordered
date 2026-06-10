@@ -93,7 +93,7 @@ export function renderEdgeDegradationControl(edge) {
     const isHostLink = edge.type === 'host-link';
     const note = isHostLink
         ? 'En enlaces switch-host se aplica el valor completo al puerto del switch.'
-        : 'En enlaces switch-switch se envia la mitad del valor a cada extremo.';
+        : 'En enlaces switch-switch se aplica el valor completo a cada extremo.';
 
     return `
         <section class="detail-section edge-action-section">
@@ -310,15 +310,14 @@ function buildEdgeDegradationOperation(formData, forcedMetric = null) {
     }
 
     const originalValue = parseMetricValue(metric, formData.get('value'));
-    const appliedValue = splitMetricValue(originalValue);
     return {
         path: `/api/links/${metric}`,
         metric,
         originalValue,
-        appliedValue,
+        appliedValue: originalValue,
         body: {
             ...baseBody,
-            [metric]: appliedValue
+            [metric]: originalValue
         }
     };
 }
@@ -532,23 +531,6 @@ function parseMetricValue(metric, value) {
     }
 
     return text;
-}
-
-function splitMetricValue(value) {
-    if (typeof value === 'number') {
-        return roundMetric(value / 2);
-    }
-
-    const match = String(value).match(/^([0-9]+(?:\.[0-9]+)?)(.*)$/);
-    if (!match) {
-        throw new Error('No se pudo dividir el valor. Usa formatos como 100, 100ms o 10mbit.');
-    }
-
-    return `${roundMetric(Number(match[1]) / 2)}${match[2].trim()}`;
-}
-
-function roundMetric(value) {
-    return Math.round(value * 1000) / 1000;
 }
 
 function numberOrString(value) {
