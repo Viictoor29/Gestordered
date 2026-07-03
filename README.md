@@ -391,12 +391,6 @@ Arrancar aplicación:
 ./mvnw spring-boot:run
 ```
 
-Ejecutar tests:
-
-```bash
-./mvnw test
-```
-
 Compilar:
 
 ```bash
