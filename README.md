@@ -432,19 +432,27 @@ use gestor_bd
 db.getUsers()
 ```
 
-### La aplicación no abre en el navegador
+La aplicación no abre en el navegador
 
-Comprueba que el puerto configurado es `8082`:
+Comprueba el puerto configurado en el archivo:
 
-```text
+src/main/resources/application.properties
+
+La aplicación usa el valor definido en la propiedad:
+
+server.port=8082
+
+Por defecto, si el puerto está configurado como 8082, debes abrir:
+
 http://localhost:8082
-```
 
-Si el puerto está ocupado, arranca con otro:
+Si quieres usar otro puerto, modifica el valor de server.port en application.properties. Por ejemplo:
 
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.arguments="--server.port=8083"
-```
+server.port=8083
+
+Después reinicia la aplicación y accede desde el navegador a:
+
+http://localhost:8083
 
 ### No se puede consultar la topología
 
