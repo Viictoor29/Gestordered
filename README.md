@@ -293,49 +293,6 @@ Los administradores pueden:
 * Eliminar topologías.
 * Consultar número de nodos y enlaces detectados.
 
-## API interna y proxy de red
-
-Gestordered expone rutas `/api/...` que funcionan como intermediarias hacia APIs externas de Ryu y Mininet.
-
-### Ryu
-
-| Método | Endpoint                        | Descripción                         |
-| ------ | ------------------------------- | ----------------------------------- |
-| `GET`  | `/api/topology`                 | Consulta la topología descubierta.  |
-| `GET`  | `/api/topology/export`          | Exporta la topología actual.        |
-| `POST` | `/api/topology/validate`        | Valida una topología JSON.          |
-| `POST` | `/api/topology/import`          | Importa una topología JSON.         |
-| `POST` | `/api/controller/runtime/reset` | Reinicia el estado del controlador. |
-| `GET`  | `/api/controller/status`        | Consulta el estado del controlador. |
-| `GET`  | `/api/health`                   | Consulta métricas de salud.         |
-| `GET`  | `/api/health/summary`           | Consulta un resumen de salud.       |
-| `GET`  | `/api/switch/{dpid}/ports`      | Consulta puertos de un switch.      |
-| `GET`  | `/api/switch/{dpid}/flows`      | Consulta flujos de un switch.       |
-| `GET`  | `/api/stp/status`               | Consulta estado STP.                |
-| `POST` | `/api/traffic/ping`             | Ejecuta una prueba ping.            |
-| `POST` | `/api/traffic/pingall`          | Ejecuta ping entre hosts.           |
-| `POST` | `/api/traffic/iperf`            | Ejecuta una prueba iperf.           |
-| `POST` | `/api/traffic/block-ip`         | Bloquea tráfico de una IP.          |
-| `POST` | `/api/traffic/unblock-ip`       | Desbloquea tráfico de una IP.       |
-| `GET`  | `/api/traffic/blocked-ips`      | Lista IPs bloqueadas.               |
-
-### Mininet
-
-| Método   | Endpoint                       | Descripción                         |
-| -------- | ------------------------------ | ----------------------------------- |
-| `GET`    | `/api/mininet/status`          | Consulta el estado de Mininet.      |
-| `GET`    | `/api/mininet/topology/export` | Exporta la topología desde Mininet. |
-| `POST`   | `/api/mininet/topology/apply`  | Aplica una topología.               |
-| `POST`   | `/api/mininet/topology/clear`  | Limpia la topología.                |
-| `POST`   | `/api/mininet/hosts`           | Crea hosts.                         |
-| `POST`   | `/api/mininet/switches`        | Crea switches.                      |
-| `POST`   | `/api/mininet/links`           | Crea enlaces.                       |
-| `POST`   | `/api/mininet/links/add`       | Añade enlaces.                      |
-| `POST`   | `/api/mininet/links/delete`    | Elimina enlaces.                    |
-| `DELETE` | `/api/mininet/hosts/{name}`    | Elimina un host.                    |
-| `DELETE` | `/api/mininet/switches/{name}` | Elimina un switch.                  |
-| `DELETE` | `/api/mininet/links`           | Elimina enlaces.                    |
-
 ## Acceso de invitado
 
 Los invitados pueden acceder a información limitada mediante rutas públicas:
